@@ -2,20 +2,19 @@
 
 :root {
   /* Base */
-  --base: #D9BBA9; /* Cream background */
+  --base: #d9bba9; /* Cream background */
   --foreground: #171717; /* Text color */
 
   /* Coffee Theme */
-  --primary: #8C472E; /* Mocha */
-  --secondary: #BF6836; /* Cinnamon */
-  --accent: #D9A05B; /* Caramel */
+  --primary: #8c472e; /* Mocha */
+  --secondary: #bf6836; /* Cinnamon */
+  --accent: #d9a05b; /* Caramel */
   --dark: #592722; /* Espresso */
 
   /* Fonts */
   --font-sans: var(--font-poppins);
   --font-heading: var(--font-playfair);
 }
-
 
 @theme inline {
   /* Colors */
@@ -32,25 +31,28 @@
   --font-heading: var(--font-playfair);
 }
 
-
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --base: #0a0a0a;
     --foreground: #ededed;
   }
 }
 
 body {
-  background: var(--background);
+  background: var(--base);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
 
-
 @layer utilities {
   @keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-15px) rotate(1deg); }
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-15px) rotate(1deg);
+    }
   }
 
   .animate-float {
@@ -58,19 +60,18 @@ body {
   }
 }
 
-
-
 @layer utilities {
-
   @keyframes promoBlink {
-    0%, 49% {
+    0%,
+    49% {
       color: white;
-      background-color: rgba(255,255,255,0.10);
+      background-color: rgba(255, 255, 255, 0.1);
     }
 
-    50%, 100% {
+    50%,
+    100% {
       color: #ff3b3b; /* rouge */
-      background-color: rgba(255,59,59,0.15);
+      background-color: rgba(255, 59, 59, 0.15);
     }
   }
 
@@ -78,5 +79,20 @@ body {
     animation: promoBlink 1.2s ease-in-out infinite;
     animation-delay: 0.7s;
   }
+}
 
+@layer utilities {
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 1s ease,
+      transform 1s ease;
+    will-change: opacity, transform;
+  }
+
+  .reveal.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

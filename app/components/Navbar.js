@@ -9,9 +9,8 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="bg-dark text-primary px-6 py-3 relative">
+    <nav className="fixed top-0 left-0 w-full bg-dark text-primary px-6 py-3 z-50">
       <div className="flex justify-between items-center max-w-6xl mx-auto">
-
         {/* Logo + اسم القهوة */}
         <Link href="/" className="flex items-center gap-3 min-w-0">
           <Image
@@ -32,10 +31,13 @@ export default function Navbar() {
         {/* Desktop Menu */}
         <div className="hidden lg:flex items-center gap-10 font-semibold text-base">
           <Link href="/" className="hover:text-accent transition-colors">
-            Home
+            Acceuil
           </Link>
 
-          <Link href="/nosCafés" className="hover:text-accent transition-colors">
+          <Link
+            href="/nosCafes"
+            className="hover:text-accent transition-colors"
+          >
             Nos cafés
           </Link>
 
@@ -47,11 +49,17 @@ export default function Navbar() {
             Contact
           </Link>
 
-          <Link href="/avisClient" className="hover:text-accent transition-colors">
+          <Link
+            href="/avisClient"
+            className="hover:text-accent transition-colors"
+          >
             Avis client
           </Link>
 
-          <Link href="/mes-recompenses" className="hover:text-accent transition-colors">
+          <Link
+            href="/mes-recompenses"
+            className="hover:text-accent transition-colors"
+          >
             Mes récompenses
           </Link>
         </div>
@@ -63,7 +71,10 @@ export default function Navbar() {
             className="p-2 rounded-lg hover:bg-white/10 transition"
             title="Mes récompenses"
           >
-            <Gift size={18} className="text-white/80 hover:text-accent transition-colors" />
+            <Gift
+              size={18}
+              className="text-white/80 hover:text-accent transition-colors"
+            />
           </Link>
 
           <Link
@@ -71,7 +82,10 @@ export default function Navbar() {
             className="p-2 rounded-lg hover:bg-white/10 transition"
             title="Mon compte"
           >
-            <User size={18} className="text-white/80 hover:text-accent transition-colors" />
+            <User
+              size={18}
+              className="text-white/80 hover:text-accent transition-colors"
+            />
           </Link>
 
           <Link
@@ -79,7 +93,10 @@ export default function Navbar() {
             className="p-2 rounded-lg hover:bg-white/10 transition"
             title="Localisation"
           >
-            <MapPin size={18} className="text-white/80 hover:text-accent transition-colors" />
+            <MapPin
+              size={18}
+              className="text-white/80 hover:text-accent transition-colors"
+            />
           </Link>
         </div>
 
@@ -100,12 +117,11 @@ export default function Navbar() {
           shadow-lg ring-1 ring-dark/10 p-6"
         >
           <div className="flex flex-col gap-4 font-semibold text-dark">
-
             <Link href="/" onClick={() => setOpen(false)}>
-              Home
+              Acceuil
             </Link>
 
-            <Link href="/nosCafés" onClick={() => setOpen(false)}>
+            <Link href="/nosCafes" onClick={() => setOpen(false)}>
               Nos cafés
             </Link>
 
@@ -131,10 +147,10 @@ export default function Navbar() {
               <User size={18} />
               <MapPin size={18} />
             </div>
-
           </div>
         </div>
       )}
+      <div className="m-1 h-[1px] w-full bg-gradient-to-r from-transparent via-accent to-transparent"></div>
     </nav>
   );
 }

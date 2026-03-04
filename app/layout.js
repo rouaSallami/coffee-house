@@ -9,24 +9,23 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
 });
 
-
 export const metadata = {
   title: "Coffee Shop Ordering",
-  description: "Order your favorite coffee online with custom options, first-order discounts, and a loyalty rewards system.",
+  description:
+    "Order your favorite coffee online with custom options, first-order discounts, and a loyalty rewards system.",
 };
-
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <body className={`${playfair.variable}`}>
         <Navbar />
-        <SocialBar/>
+        <SocialBar />
         <div className="h-[0.5px] bg-linear-to-r from-transparent via-accent to-transparent"></div>
 
         {children}
-        
-        <Footer/>
+
+        <Footer />
       </body>
     </html>
   );
