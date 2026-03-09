@@ -39,7 +39,7 @@ export default function NosCafesPage() {
   }, [coffees, activeCat, q]);
 
   return (
-    <div className="bg-accent min-h-screen">
+    <div className="bg-accent min-h-screen mt-18">
       <div className="max-w-6xl mx-auto px-6 py-14">
         {/* Header */}
         <div className="text-center">
