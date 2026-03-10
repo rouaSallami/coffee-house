@@ -31,6 +31,30 @@ const addons = [
     price: 5,
     image: "/images/brownie-fondant.jpg",
   },
+  {
+  id: "muffin-chocolat",
+  name: "Muffin au chocolat",
+  price: 4,
+  image: "/images/muffin-chocolat.jpg",
+},
+{
+  id: "muffin-vanille",
+  name: "Muffin vanille",
+  price: 4,
+  image: "/images/muffin-vanille.jpg",
+},
+{
+  id: "cheesecake",
+  name: "Cheesecake",
+  price: 6,
+  image: "/images/cheesecake.jpg",
+},
+{
+  id: "tiramisu",
+  name: "Tiramisu",
+  price: 6,
+  image: "/images/tiramisu.jpg",
+},
 ];
 
 export async function GET() {

@@ -48,7 +48,7 @@ export default function HomeAddonsSection() {
 
         <div className="text-center mt-10">
           <Link
-            href="/nosCafés"
+            href="/nosCafes"
             className="inline-flex bg-accent text-dark px-7 py-3 rounded-xl font-semibold hover:opacity-90 transition"
           >
             choisir ton café
