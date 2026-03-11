@@ -33,7 +33,7 @@ export default function RewardsTeaser() {
 
           {/* CTA */}
           <Link
-            href="/mesRécompenses"
+            href="/mesRecompenses"
             className="inline-flex justify-center bg-accent text-dark px-7 py-3 rounded-xl font-semibold hover:opacity-90 transition"
           >
             Voir mes récompenses
