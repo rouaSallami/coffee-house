@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function PanierPage() {
   const [cart, setCart] = useState([]);
@@ -147,9 +148,12 @@ const handleDecreaseQty = (id) => {
               </div>
 
               <div className="mt-6 flex justify-end">
-                <button className="bg-dark text-white px-6 py-3 rounded-2xl font-semibold hover:opacity-90 transition">
-                  Commander
-                </button>
+                <Link
+  href="/checkout"
+  className="bg-dark text-white px-6 py-3 rounded-2xl font-semibold hover:opacity-90 transition inline-block"
+>
+  Commander
+</Link>
               </div>
             </div>
           </>
