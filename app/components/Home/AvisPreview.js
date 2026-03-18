@@ -25,7 +25,7 @@ function Stars({ rating }) {
   return (
     <div className="flex gap-1">
       {Array.from({ length: 5 }).map((_, i) => (
-        <span key={i} className={i < rating ? "text-accent" : "text-white/20"}>
+        <span key={i} className={i < rating ? "text-secondary" : "text-dark/20"}>
           ★
         </span>
       ))}
@@ -35,24 +35,37 @@ function Stars({ rating }) {
 
 export default function AvisPreview() {
   return (
-    <section className="py-20 bg-dark text-white">
-      <div className="max-w-6xl mx-auto px-6">
+    <section className="relative py-20 bg-secondary text-dark overflow-hidden">
+      
+      {/* background glow كيف hero */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_45%)]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary to-secondary/80" />
+
+      <div className="relative max-w-6xl mx-auto px-6">
+        
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12">
           <div>
-            <h2 className="text-3xl font-bold">Avis clients</h2>
-            <p className="text-white/70 mt-2">
-              Ce que nos clients pensent de Coffee House.
+            <p className="text-dark/70 font-bold tracking-[0.2em] text-xs uppercase mb-3">
+              Témoignages
+            </p>
+
+            <h2 className="text-3xl sm:text-4xl font-bold text-dark">
+              Avis clients
+            </h2>
+
+            <p className="text-dark/75 mt-3">
+              Découvrez les retours de nos clients après leur expérience Coffee House.
             </p>
           </div>
 
-          {/* Rating summary */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4">
+          {/* rating */}
+          <div className="bg-creamy/40 border border-dark/10 rounded-2xl px-5 py-4 backdrop-blur-md shadow-lg">
             <div className="flex items-center gap-3">
-              <p className="text-2xl font-bold text-accent">4.9</p>
+              <p className="text-2xl font-bold text-dark/80">4.9</p>
               <div>
                 <Stars rating={5} />
-                <p className="text-white/60 text-sm mt-1">Basé sur 120 avis</p>
+                <p className="text-dark/60 text-sm mt-1">Basé sur 120 avis</p>
               </div>
             </div>
           </div>
@@ -63,13 +76,15 @@ export default function AvisPreview() {
           {avis.map((a) => (
             <div
               key={a.id}
-              className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6 hover:-translate-y-1 transition"
+              className="bg-creamy/40 backdrop-blur-md border border-dark/10 rounded-3xl p-6 shadow-lg transition hover:-translate-y-1"
             >
               <Stars rating={a.rating} />
-              <p className="text-white/80 mt-4 text-sm leading-relaxed">
+
+              <p className="text-dark/75 mt-4 text-sm leading-relaxed">
                 “{a.text}”
               </p>
-              <p className="mt-5 font-semibold text-white">{a.name}</p>
+
+              <p className="mt-5 font-semibold text-dark">{a.name}</p>
             </div>
           ))}
         </div>
@@ -78,7 +93,7 @@ export default function AvisPreview() {
         <div className="text-center mt-10">
           <Link
             href="/avisClient"
-            className="inline-flex bg-accent text-dark px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition"
+            className="inline-flex items-center justify-center rounded-2xl bg-dark text-creamy px-8 py-3.5 font-semibold shadow-lg transition hover:scale-[1.02] hover:opacity-95"
           >
             Voir tous les avis
           </Link>

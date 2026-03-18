@@ -1,11 +1,11 @@
-import NosCafes from "./nosCafes";
+import ContactPage from "./contact";
 
 export const metadata = {
-  title: "Nos cafés | Coffee House",
+  title: "Contact | Coffee House",
   description:
     "Découvrez notre sélection de cafés artisanaux chez Coffee House.",
 };
 
 export default function Page() {
-  return <NosCafes />;
+  return <ContactPage />;
 }

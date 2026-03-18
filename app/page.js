@@ -1,13 +1,12 @@
-import Image from "next/image";
 import Hero from "./components/Home/Hero";
 import HomeCoffeesSection from "./components/Home/HomeCoffeesSection";
 import HomeAddonsSection from "./components/Home/HomeAddonsSection";
 import HowItWorks from "./components/Home/HowItWorks";
 import AvisPreview from "./components/Home/AvisPreview";
-import AvisForm from "./avisClient/avisClient";
 import RewardsTeaser from "./components/Home/RewardsTeaser";
-import DeliveryZones from "./components/Home/DeliveryZones";
 import PourquoiNous from "./components/Home/PourquoiNous";
+import FinalCTA from "./components/Home/ctaFinal";
+
 
 export default function Home() {
   return (
@@ -19,7 +18,7 @@ export default function Home() {
       <RewardsTeaser />
       <PourquoiNous />
       <AvisPreview />
-      <AvisForm />
+      <FinalCTA/>
     </div>
   );
 }

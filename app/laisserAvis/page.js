@@ -1,11 +1,12 @@
-import NosCafes from "./nosCafes";
+
+import Stars from "./laisserAvis";
 
 export const metadata = {
-  title: "Nos cafés | Coffee House",
+  title: "Avis Client | Coffee House",
   description:
     "Découvrez notre sélection de cafés artisanaux chez Coffee House.",
 };
 
 export default function Page() {
-  return <NosCafes />;
+  return <Stars />;
 }

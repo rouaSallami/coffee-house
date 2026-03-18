@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import SocialBar from "./SocialBar/page";
+import { Toaster } from "react-hot-toast";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -10,9 +11,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata = {
-  title: "Coffee Shop Ordering",
-  description:
-    "Order your favorite coffee online with custom options, first-order discounts, and a loyalty rewards system.",
+  title: "Coffee House - Meilleur café",
+  description: "Découvrez nos cafés artisanaux et commandez en ligne.",
 };
 
 export default function RootLayout({ children }) {
@@ -24,6 +24,8 @@ export default function RootLayout({ children }) {
         <div className="h-[0.5px] bg-linear-to-r from-transparent via-accent to-transparent"></div>
 
         {children}
+        
+        <Toaster position="top-center" />
 
         <Footer />
       </body>
