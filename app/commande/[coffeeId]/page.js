@@ -110,10 +110,10 @@ export default function CoffeeOrderPage() {
 
     {/* Text */}
     <div className="flex flex-col">
-      <p className="font-semibold text-dark">
+      <p className="font-semibold text-dark2">
         {coffee.name}
       </p>
-      <p className="text-sm text-dark/60">
+      <p className="text-sm text-dark2/60">
         Ajouté au panier 🛒
       </p>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { User, MapPin, ShoppingCart, Heart } from "lucide-react";
@@ -11,38 +11,56 @@ export default function Navbar() {
   const [cartCount, setCartCount] = useState(0);
   const [favCount, setFavCount] = useState(0);
   const [hasOrder, setHasOrder] = useState(false);
+  const menuRef = useRef(null);
+  const buttonRef = useRef(null);
 
   useEffect(() => {
-    const updateCartCount = () => {
-      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-      const count = cart.reduce((sum, item) => sum + (item.qty || 0), 0);
-      setCartCount(count);
-    };
+  const updateCartCount = () => {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    const count = cart.reduce((sum, item) => sum + (item.qty || 0), 0);
+    setCartCount(count);
+  };
 
-    const updateFavCount = () => {
-      const favs = JSON.parse(localStorage.getItem("favoriteCoffees") || "[]");
-      setFavCount(favs.length);
-    };
+  const updateFavCount = () => {
+    const favs = JSON.parse(localStorage.getItem("favoriteCoffees") || "[]");
+    setFavCount(favs.length);
+  };
 
-    const checkOrder = () => {
-      const order = localStorage.getItem("lastOrder");
-      setHasOrder(!!order);
-    };
+  const checkOrder = () => {
+    const order = localStorage.getItem("lastOrder");
+    setHasOrder(!!order);
+  };
 
-    updateCartCount();
-    updateFavCount();
-    checkOrder();
+  const handleClickOutside = (event) => {
+    const target = event.target;
 
-    window.addEventListener("cartUpdated", updateCartCount);
-    window.addEventListener("favoritesUpdated", updateFavCount);
-    window.addEventListener("orderUpdated", checkOrder);
+    if (
+      open &&
+      menuRef.current &&
+      !menuRef.current.contains(target) &&
+      buttonRef.current &&
+      !buttonRef.current.contains(target)
+    ) {
+      setOpen(false);
+    }
+  };
 
-    return () => {
-      window.removeEventListener("cartUpdated", updateCartCount);
-      window.removeEventListener("favoritesUpdated", updateFavCount);
-      window.removeEventListener("orderUpdated", checkOrder);
-    };
-  }, []);
+  updateCartCount();
+  updateFavCount();
+  checkOrder();
+
+  window.addEventListener("cartUpdated", updateCartCount);
+  window.addEventListener("favoritesUpdated", updateFavCount);
+  window.addEventListener("orderUpdated", checkOrder);
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    window.removeEventListener("cartUpdated", updateCartCount);
+    window.removeEventListener("favoritesUpdated", updateFavCount);
+    window.removeEventListener("orderUpdated", checkOrder);
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, [open]);
 
   return (
     <nav className="fixed top-0 left-0 z-50 w-full border-b border-dark/10 bg-beige/50 px-6 py-3 text-dark shadow-sm backdrop-blur-md">
@@ -113,7 +131,7 @@ export default function Navbar() {
               className="text-dark/80 transition-colors hover:text-dark"
             />
             {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-dark px-1 text-xs font-bold text-beige shadow-sm">
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-beige shadow-sm">
                 {cartCount}
               </span>
             )}
@@ -151,7 +169,7 @@ export default function Navbar() {
               className="text-dark/80 transition-colors hover:text-dark"
             />
             {favCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-dark px-1 text-xs font-bold text-beige shadow-sm">
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-beige shadow-sm">
                 {favCount}
               </span>
             )}
@@ -159,7 +177,8 @@ export default function Navbar() {
         </div>
 
         <button
-          className="cursor-pointer p-1 text-3xl text-dark lg:hidden"
+  ref={buttonRef}
+  className="cursor-pointer p-1 text-3xl text-dark lg:hidden"
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
         >
@@ -168,7 +187,10 @@ export default function Navbar() {
       </div>
 
       {open && (
-        <div className="absolute right-4 top-20 w-72 rounded-2xl border border-white/10 bg-dark/95 p-6 shadow-xl ring-1 ring-white/10 backdrop-blur-xl lg:hidden">
+        <div
+  ref={menuRef}
+  className="absolute right-4 top-20 w-72 rounded-2xl border border-white/10 bg-dark/95 p-6 shadow-xl ring-1 ring-white/10 backdrop-blur-xl lg:hidden"
+>
           <div className="flex flex-col gap-4 font-semibold text-beige">
             <Link
               href="/"
@@ -256,7 +278,7 @@ export default function Navbar() {
               >
                 <Heart size={18} className="text-beige/80" />
                 {favCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-bold text-dark shadow-sm">
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-dark shadow-sm">
                     {favCount}
                   </span>
                 )}
@@ -269,7 +291,7 @@ export default function Navbar() {
               >
                 <ShoppingCart size={18} className="text-beige/80" />
                 {cartCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-bold text-dark shadow-sm">
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-dark shadow-sm">
                     {cartCount}
                   </span>
                 )}

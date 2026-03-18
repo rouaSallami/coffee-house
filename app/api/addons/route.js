@@ -35,7 +35,7 @@ const addons = [
   id: "muffin-chocolat",
   name: "Muffin au chocolat",
   price: 4,
-  image: "/images/muffin-chocolat.jpg",
+  image: "/images/muffin-au-chocolat.jpg",
 },
 {
   id: "muffin-vanille",
