@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { User, ShoppingCart, Heart, LogOut } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import { getUserData } from "../lib/storage";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -17,13 +18,13 @@ export default function Navbar() {
 
   useEffect(() => {
     const updateCartCount = () => {
-      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      const cart = getUserData("cart", []);
       const count = cart.reduce((sum, item) => sum + (item.qty || 0), 0);
       setCartCount(count);
     };
 
     const updateFavCount = () => {
-      const favs = JSON.parse(localStorage.getItem("favoriteCoffees") || "[]");
+      const favs = getUserData("favoriteCoffees", []);
       setFavCount(favs.length);
     };
 
@@ -72,15 +73,18 @@ export default function Navbar() {
   }, [open]);
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("user");
+  localStorage.removeItem("isAuthenticated");
+  localStorage.removeItem("user");
 
-    setIsAuthenticated(false);
-    setOpen(false);
+  setIsAuthenticated(false);
+  setOpen(false);
 
-    window.dispatchEvent(new Event("authChanged"));
-    window.location.href = "/login";
-  };
+  window.dispatchEvent(new Event("authChanged"));
+  window.dispatchEvent(new Event("cartUpdated"));
+  window.dispatchEvent(new Event("favoritesUpdated"));
+
+  window.location.href = "/login";
+};
 
   return (
     <nav className="fixed top-0 left-0 z-50 w-full border-b border-dark/10 bg-beige/50 px-6 py-3 text-dark shadow-sm backdrop-blur-md">
@@ -127,29 +131,16 @@ export default function Navbar() {
           </Link>
 
           {hasOrder && (
-            <>
-              <Link
-                href="/suivi-commande"
-                className="transition-colors hover:text-primary"
-              >
-                Suivi commande
-              </Link>
-
-              {isAuthenticated && (
-  <button
-    type="button"
-    onClick={handleLogout}
-    className="rounded-xl p-2.5 transition hover:bg-red-50"
-    title="Déconnexion"
+  <Link
+    href="/suivi-commande"
+    className="transition-colors hover:text-primary"
   >
-    <LogOut
-      size={20}
-      className="text-red-500 hover:text-red-600"
-    />
-  </button>
+    Suivi commande
+  </Link>
 )}
-            </>
-          )}
+
+
+
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -199,6 +190,19 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <ThemeToggle />
           </div>
+          {isAuthenticated && (
+  <button
+    type="button"
+    onClick={handleLogout}
+    className="rounded-xl p-2.5 transition hover:bg-red-50 cursor-pointer"
+    title="Déconnexion"
+  >
+    <LogOut
+      size={20}
+      className="text-red-500 transition-colors hover:text-red-600"
+    />
+  </button>
+)}
         </div>
 
         <button
@@ -321,8 +325,19 @@ export default function Navbar() {
               </Link>
 
               <div className="flex gap-4">
-                <ThemeToggle />
-              </div>
+  <ThemeToggle />
+</div>
+
+{isAuthenticated && (
+  <button
+    type="button"
+    onClick={handleLogout}
+    className="rounded-xl p-2.5 transition hover:bg-white/50 cursor-pointer"
+    title="Déconnexion"
+  >
+    <LogOut size={18} className="text-red-400" />
+  </button>
+)}
             </div>
           </div>
         </div>

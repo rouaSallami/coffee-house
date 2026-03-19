@@ -11,6 +11,7 @@ import {
   Phone,
   UserPlus,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -34,41 +35,44 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    if (form.password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères.");
-      return;
-    }
+  if (form.password.length < 6) {
+    setError("Le mot de passe doit contenir au moins 6 caractères.");
+    return;
+  }
 
-    if (form.password !== form.password_confirmation) {
-      setError("La confirmation du mot de passe ne correspond pas.");
-      return;
-    }
+  if (form.password !== form.password_confirmation) {
+    setError("La confirmation du mot de passe ne correspond pas.");
+    return;
+  }
 
-    try {
-      // mock frontend tawa
-      const fakeUser = {
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-      };
+  try {
+    const fakeUser = {
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+    };
 
-      localStorage.setItem("user", JSON.stringify(fakeUser));
-      localStorage.setItem("isAuthenticated", "true");
+    localStorage.setItem("user", JSON.stringify(fakeUser));
+    localStorage.setItem("isAuthenticated", "true");
 
-      window.dispatchEvent(new Event("authChanged"));
+    window.dispatchEvent(new Event("authChanged"));
+    window.dispatchEvent(new Event("cartUpdated"));
+    window.dispatchEvent(new Event("favoritesUpdated"));
 
-      setSuccess(true);
+    toast.success("Compte créé avec succès 🎉");
 
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1400);
-    } catch (err) {
-      setError("Une erreur est survenue. Veuillez réessayer.");
-    }
-  };
+    setSuccess(true);
+
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 1400);
+  } catch (err) {
+    setError("Une erreur est survenue. Veuillez réessayer.");
+  }
+};
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-secondary text-dark">

@@ -1,14 +1,31 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SocialBar from "../SocialBar/page";
 
 export default function LayoutClient({ children }) {
   const pathname = usePathname();
+  const [checked, setChecked] = useState(false);
 
   const hide = pathname === "/login" || pathname === "/register";
+
+  useEffect(() => {
+    const isAuthenticated =
+      localStorage.getItem("isAuthenticated") === "true";
+
+    const publicRoutes = ["/login", "/register"];
+
+    if (!isAuthenticated && !publicRoutes.includes(pathname)) {
+      window.location.href = "/login";
+    } else {
+      setChecked(true);
+    }
+  }, [pathname]);
+
+  if (!checked) return null;
 
   return (
     <>

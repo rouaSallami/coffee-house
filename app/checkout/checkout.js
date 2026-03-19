@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import { getUserData, setUserData } from "../lib/storage";
 
 export default function CheckoutPage() {
   const [mode, setMode] = useState(null);
   const [cart, setCart] = useState([]);
 
   useEffect(() => {
-    const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
+    const storedCart = getUserData("cart", []);
     setCart(storedCart);
   }, []);
 
@@ -140,17 +141,16 @@ export default function CheckoutPage() {
                   };
 
                   localStorage.setItem("lastOrder", JSON.stringify(order));
-                  window.dispatchEvent(new Event("cartUpdated"));
 
-                  const currentPoints =
-                    Number(localStorage.getItem("points")) || 0;
-                  const newPoints = currentPoints + 20;
-                  localStorage.setItem("points", newPoints);
+const currentPoints =
+  Number(localStorage.getItem("points")) || 0;
+const newPoints = currentPoints + 20;
+localStorage.setItem("points", newPoints);
 
-                  localStorage.removeItem("cart");
-                  window.dispatchEvent(new Event("cartUpdated"));
+setUserData("cart", []);
+window.dispatchEvent(new Event("cartUpdated"));
 
-                  window.location.href = "/suivi-commande";
+window.location.href = "/suivi-commande";
                 }}
               >
                 <Form className="rounded-3xl p-8 border border-dark/10 bg-white/30 backdrop-blur-md shadow-xl space-y-5">

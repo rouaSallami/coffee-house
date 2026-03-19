@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import NosCafesCard from "../components/coffees/NosCafesCard";
 import CoffeeDetailsModal from "../components/coffees/CoffeeDetailsModal";
+import { getUserData, setUserData } from "../lib/storage";
 
 const CATEGORIES = [
   "Tous",
@@ -50,16 +51,14 @@ export default function NosCafesPage() {
   }, []);
 
   useEffect(() => {
-    try {
-      const storedFavorites = JSON.parse(
-        localStorage.getItem("favoriteCoffees") || "[]"
-      );
-      setFavorites(Array.isArray(storedFavorites) ? storedFavorites : []);
-    } catch (error) {
-      console.error("Erreur lecture localStorage:", error);
-      setFavorites([]);
-    }
-  }, []);
+  try {
+    const storedFavorites = getUserData("favoriteCoffees", []);
+    setFavorites(Array.isArray(storedFavorites) ? storedFavorites : []);
+  } catch (error) {
+    console.error("Erreur lecture localStorage:", error);
+    setFavorites([]);
+  }
+}, []);
 
   useEffect(() => {
     return () => {
@@ -102,7 +101,7 @@ export default function NosCafesPage() {
       : [...favorites, coffee];
 
     setFavorites(updatedFavorites);
-    localStorage.setItem("favoriteCoffees", JSON.stringify(updatedFavorites));
+    setUserData("favoriteCoffees", updatedFavorites);
     window.dispatchEvent(new Event("favoritesUpdated"));
 
     showFeedbackToast(exists ? "Retiré des favoris" : "Ajouté aux favoris");
@@ -150,14 +149,16 @@ export default function NosCafesPage() {
   };
 
   const handleToggleFavorite = (coffee) => {
-    const exists = favorites.some((item) => item.id === coffee.id);
+  const exists = favorites.some((item) => item.id === coffee.id);
 
-    if (exists) {
-      setFavorites(favorites.filter((item) => item.id !== coffee.id));
-    } else {
-      setFavorites([...favorites, coffee]);
-    }
-  };
+  const updatedFavorites = exists
+    ? favorites.filter((item) => item.id !== coffee.id)
+    : [...favorites, coffee];
+
+  setFavorites(updatedFavorites);
+  setUserData("favoriteCoffees", updatedFavorites);
+  window.dispatchEvent(new Event("favoritesUpdated"));
+};
 
   return (
     <div className="relative min-h-screen mt-18 overflow-hidden bg-secondary text-dark">

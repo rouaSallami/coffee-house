@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { getUserData, setUserData } from "../../lib/storage";
 
 export default function CoffeeOrderPage() {
   const { coffeeId } = useParams();
@@ -87,9 +88,9 @@ export default function CoffeeOrderPage() {
     qty: 1,
   };
 
-  const existingCart = JSON.parse(localStorage.getItem("cart")) || [];
+  const existingCart = getUserData("cart", []);
   existingCart.push(cartItem);
-  localStorage.setItem("cart", JSON.stringify(existingCart));
+  setUserData("cart", existingCart);
   window.dispatchEvent(new Event("cartUpdated"));
 
   toast.custom((t) => (

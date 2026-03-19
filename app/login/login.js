@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
+import toast from "react-hot-toast";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const [form, setForm] = useState({
@@ -14,6 +16,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -25,30 +28,38 @@ export default function LoginPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      // tawa mock frontend seulement
-      const fakeUser = {
-        name: "Client Coffee House",
-        email: form.email,
-      };
+  try {
+    const fakeUser = {
+      name: "Client Coffee House",
+      email: form.email,
+    };
 
-      localStorage.setItem("user", JSON.stringify(fakeUser));
-      localStorage.setItem("isAuthenticated", "true");
+    localStorage.setItem("user", JSON.stringify(fakeUser));
+    localStorage.setItem("isAuthenticated", "true");
 
-      window.dispatchEvent(new Event("authChanged"));
+    window.dispatchEvent(new Event("authChanged"));
+    window.dispatchEvent(new Event("cartUpdated"));
+    window.dispatchEvent(new Event("favoritesUpdated"));
 
-      setSuccess(true);
+    setLoading(true);
 
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1200);
-    } catch (err) {
-      setError("Une erreur est survenue. Veuillez réessayer.");
-    }
-  };
+setTimeout(() => {
+  toast.success(`Bienvenue ${fakeUser.name} ☕`);
+}, 1000);
+
+setTimeout(() => {
+  window.location.href = "/";
+}, 2000);
+
+  } catch (err) {
+    setError("Une erreur est survenue. Veuillez réessayer.");
+    setLoading(false);
+  }
+};
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-secondary text-dark">
@@ -56,7 +67,13 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary to-secondary/80" />
 
       <div className="relative mx-auto flex min-h-[calc(100vh-64px)] max-w-6xl items-center justify-center px-6 py-16">
-        <div className="grid w-full max-w-5xl overflow-hidden rounded-[32px] border border-dark/10 bg-white/30 shadow-2xl backdrop-blur-md lg:grid-cols-2">
+        <motion.div
+  initial={{ opacity: 0, scale: 0.95, y: 30 }}
+  animate={{ opacity: 1, scale: 1, y: 0 }}
+  transition={{ duration: 0.5, ease: "easeOut" }}
+  className="grid w-full max-w-5xl overflow-hidden rounded-[32px] border border-dark/10 bg-white/30 shadow-2xl backdrop-blur-md lg:grid-cols-2"
+>
+  
           {/* Left */}
           <div className="hidden flex-col justify-center bg-dark2 px-10 py-12 text-white lg:flex">
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white/70">
@@ -94,11 +111,7 @@ export default function LoginPage() {
                 Entrez vos informations pour accéder à votre compte.
               </p>
 
-              {success && (
-                <div className="mt-6 rounded-2xl border border-green-200 bg-green-50/90 px-4 py-3 text-sm font-medium text-green-700 shadow-sm">
-                  Connexion réussie. Redirection en cours...
-                </div>
-              )}
+              
 
               {error && (
                 <div className="mt-6 rounded-2xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm font-medium text-red-700 shadow-sm">
@@ -171,12 +184,13 @@ export default function LoginPage() {
                 </div>
 
                 <button
-                  type="submit"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-dark2 px-6 py-3.5 font-semibold text-white shadow-md transition hover:scale-[1.02] hover:opacity-95"
-                >
-                  <LogIn size={18} />
-                  Se connecter
-                </button>
+  type="submit"
+  disabled={loading}
+  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-dark2 px-6 py-3.5 font-semibold text-white shadow-md transition hover:scale-[1.02] hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
+>
+  <LogIn size={18} />
+  Se connecter
+</button>
               </form>
 
               <p className="mt-6 text-center text-sm text-dark/70">
@@ -187,11 +201,24 @@ export default function LoginPage() {
                 >
                   S’inscrire
                 </Link>
-              </p>
+                </p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
+      {loading && (
+  <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="flex flex-col items-center gap-4 bg-white px-6 py-5 rounded-2xl shadow-xl">
+      
+      <span className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-primary"></span>
+
+      <p className="text-sm font-semibold text-dark">
+        Connexion en cours...
+      </p>
+
+    </div>
+  </div>
+)}
     </div>
   );
 }

@@ -3,26 +3,27 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { getUserData, setUserData } from "../lib/storage";
 
 export default function PanierPage() {
   const [cart, setCart] = useState([]);
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
-    setCart(storedCart);
-  }, []);
+  const storedCart = getUserData("cart", []);
+  setCart(Array.isArray(storedCart) ? storedCart : []);
+}, []);
 
   const handleRemoveItem = (id) => {
     const updatedCart = cart.filter((item) => item.id !== id);
     setCart(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    setUserData("cart", updatedCart);
     window.dispatchEvent(new Event("cartUpdated"));
   };
 
   const handleClearCart = () => {
     setCart([]);
-    localStorage.setItem("cart", JSON.stringify([]));
+    setUserData("cart", []);
     window.dispatchEvent(new Event("cartUpdated"));
     setShowConfirm(false);
   };
@@ -37,7 +38,7 @@ export default function PanierPage() {
     );
 
     setCart(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    setUserData("cart", updatedCart);
     window.dispatchEvent(new Event("cartUpdated"));
   };
 
@@ -49,7 +50,7 @@ export default function PanierPage() {
     );
 
     setCart(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    setUserData("cart", updatedCart);
     window.dispatchEvent(new Event("cartUpdated"));
   };
 

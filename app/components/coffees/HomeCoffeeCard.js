@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart } from "lucide-react";
+import { getUserData, setUserData } from "../../lib/storage";
 
 export default function HomeCoffeeCard({ coffee, variant = "home" }) {
   const isMenu = variant === "menu";
@@ -12,37 +13,34 @@ export default function HomeCoffeeCard({ coffee, variant = "home" }) {
   const [toastMessage, setToastMessage] = useState("");
 
   useEffect(() => {
-    const storedFavorites =
-      JSON.parse(localStorage.getItem("favoriteCoffees")) || [];
+  const storedFavorites = getUserData("favoriteCoffees", []);
+  const exists = storedFavorites.some((fav) => fav.id === coffee.id);
+  setIsFavorite(exists);
+}, [coffee.id]);
 
-    const exists = storedFavorites.some((fav) => fav.id === coffee.id);
-    setIsFavorite(exists);
-  }, [coffee.id]);
+const toggleFavorite = () => {
+  const storedFavorites = getUserData("favoriteCoffees", []);
 
-  const toggleFavorite = () => {
-    const storedFavorites =
-      JSON.parse(localStorage.getItem("favoriteCoffees")) || [];
+  let updatedFavorites;
 
-    let updatedFavorites;
+  if (storedFavorites.some((fav) => fav.id === coffee.id)) {
+    updatedFavorites = storedFavorites.filter((fav) => fav.id !== coffee.id);
+    setIsFavorite(false);
+    setToastMessage("Retiré des favoris");
+  } else {
+    updatedFavorites = [...storedFavorites, coffee];
+    setIsFavorite(true);
+    setToastMessage("Ajouté aux favoris");
+  }
 
-    if (storedFavorites.some((fav) => fav.id === coffee.id)) {
-      updatedFavorites = storedFavorites.filter((fav) => fav.id !== coffee.id);
-      setIsFavorite(false);
-      setToastMessage("Retiré des favoris");
-    } else {
-      updatedFavorites = [...storedFavorites, coffee];
-      setIsFavorite(true);
-      setToastMessage("Ajouté aux favoris");
-    }
+  setUserData("favoriteCoffees", updatedFavorites);
+  window.dispatchEvent(new Event("favoritesUpdated"));
 
-    localStorage.setItem("favoriteCoffees", JSON.stringify(updatedFavorites));
-    window.dispatchEvent(new Event("favoritesUpdated"));
-
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-    }, 1800);
-  };
+  setShowToast(true);
+  setTimeout(() => {
+    setShowToast(false);
+  }, 1800);
+};
 
   const fromPrice = coffee.sizes?.length
     ? Math.min(...coffee.sizes.map((s) => s.price))

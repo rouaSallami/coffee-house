@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import NosCafesCard from "../components/coffees/NosCafesCard";
 import CoffeeDetailsModal from "../components/coffees/CoffeeDetailsModal";
+import { getUserData, setUserData } from "../lib/storage";
 
 export default function FavorisPage() {
   const [favorites, setFavorites] = useState([]);
@@ -11,25 +12,23 @@ export default function FavorisPage() {
   const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
-    const loadFavorites = () => {
-      try {
-        const storedFavorites = JSON.parse(
-          localStorage.getItem("favoriteCoffees") || "[]"
-        );
-        setFavorites(Array.isArray(storedFavorites) ? storedFavorites : []);
-      } catch (error) {
-        console.error("Erreur lecture favoris:", error);
-        setFavorites([]);
-      }
-    };
+  const loadFavorites = () => {
+    try {
+      const storedFavorites = getUserData("favoriteCoffees", []);
+      setFavorites(Array.isArray(storedFavorites) ? storedFavorites : []);
+    } catch (error) {
+      console.error("Erreur lecture favoris:", error);
+      setFavorites([]);
+    }
+  };
 
-    loadFavorites();
-    window.addEventListener("favoritesUpdated", loadFavorites);
+  loadFavorites();
+  window.addEventListener("favoritesUpdated", loadFavorites);
 
-    return () => {
-      window.removeEventListener("favoritesUpdated", loadFavorites);
-    };
-  }, []);
+  return () => {
+    window.removeEventListener("favoritesUpdated", loadFavorites);
+  };
+}, []);
 
   const toggleFavorite = (coffee) => {
     const exists = favorites.some((fav) => fav.id === coffee.id);
@@ -43,7 +42,7 @@ export default function FavorisPage() {
     }
 
     setFavorites(updatedFavorites);
-    localStorage.setItem("favoriteCoffees", JSON.stringify(updatedFavorites));
+    setUserData("favoriteCoffees", updatedFavorites);
     window.dispatchEvent(new Event("favoritesUpdated"));
   };
 
