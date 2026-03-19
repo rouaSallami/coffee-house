@@ -110,6 +110,24 @@ export default function Footer() {
             </ul>
           </div>
 
+          <li>
+  <Link
+    href="/login"
+    className="hover:text-beige transition-colors"
+  >
+    Se connecter
+  </Link>
+</li>
+
+<li>
+  <Link
+    href="/register"
+    className="hover:text-beige transition-colors"
+  >
+    S&apos;inscrire
+  </Link>
+</li>
+
           {/* Contact */}
           <div>
             <h3 className="text-lg font-semibold mb-4 text-dark">Contact</h3>

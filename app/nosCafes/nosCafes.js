@@ -173,7 +173,7 @@ export default function NosCafesPage() {
             animate={{ opacity: 1, y: 0, x: "-50%" }}
             exit={{ opacity: 0, y: -10, x: "-50%" }}
             transition={{ duration: 0.2 }}
-            className="fixed top-24 left-1/2 z-[60] rounded-full border border-dark/10 bg-white/80 px-5 py-2.5 text-sm font-medium text-dark shadow-lg backdrop-blur-md"
+            className="fixed top-24 left-1/2 z-[60] rounded-full border border-dark/10 bg-white/80 px-5 py-2.5 text-sm font-medium text-dark2 shadow-lg backdrop-blur-md"
           >
             {toastMessage}
           </motion.div>
