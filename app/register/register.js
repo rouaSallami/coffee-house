@@ -12,6 +12,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { motion } from "framer-motion";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -24,8 +25,8 @@ export default function RegisterPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -35,52 +36,60 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
+    e.preventDefault();
+    setError("");
 
-  if (form.password.length < 6) {
-    setError("Le mot de passe doit contenir au moins 6 caractères.");
-    return;
-  }
+    if (form.password.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
 
-  if (form.password !== form.password_confirmation) {
-    setError("La confirmation du mot de passe ne correspond pas.");
-    return;
-  }
+    if (form.password !== form.password_confirmation) {
+      setError("La confirmation du mot de passe ne correspond pas.");
+      return;
+    }
 
-  try {
-    const fakeUser = {
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-    };
+    setLoading(true);
 
-    localStorage.setItem("user", JSON.stringify(fakeUser));
-    localStorage.setItem("isAuthenticated", "true");
+    try {
+      const fakeUser = {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+      };
 
-    window.dispatchEvent(new Event("authChanged"));
-    window.dispatchEvent(new Event("cartUpdated"));
-    window.dispatchEvent(new Event("favoritesUpdated"));
+      localStorage.setItem("user", JSON.stringify(fakeUser));
+      localStorage.setItem("isAuthenticated", "true");
 
-    toast.success("Compte créé avec succès 🎉");
+      window.dispatchEvent(new Event("authChanged"));
+      window.dispatchEvent(new Event("cartUpdated"));
+      window.dispatchEvent(new Event("favoritesUpdated"));
 
-    setSuccess(true);
+      setTimeout(() => {
+        toast.success("Compte créé avec succès 🎉");
+      }, 1000);
 
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 1400);
-  } catch (err) {
-    setError("Une erreur est survenue. Veuillez réessayer.");
-  }
-};
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+    } catch (err) {
+      setError("Une erreur est survenue. Veuillez réessayer.");
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-secondary text-dark">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_45%)]" />
       <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary to-secondary/80" />
 
-      <div className="relative mx-auto flex min-h-[calc(100vh-64px)] max-w-6xl items-center justify-center px-6 py-2">
-        <div className="grid w-full max-w-5xl overflow-hidden rounded-[32px] border border-dark/10 bg-white/30 shadow-2xl backdrop-blur-md lg:grid-cols-2">
+      <div className="relative mx-auto flex min-h-[calc(100vh-64px)] max-w-6xl items-center justify-center px-6 py-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="grid w-full max-w-5xl overflow-hidden rounded-[32px] border border-dark/10 bg-white/30 shadow-2xl backdrop-blur-md lg:grid-cols-2"
+        >
           {/* Left */}
           <div className="hidden flex-col justify-center bg-dark2 px-10 py-12 text-white lg:flex">
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white/70">
@@ -117,12 +126,6 @@ export default function RegisterPage() {
               <p className="mt-2 text-dark/70">
                 Remplissez les informations ci-dessous pour commencer.
               </p>
-
-              {success && (
-                <div className="mt-6 rounded-2xl border border-green-200 bg-green-50/90 px-4 py-3 text-sm font-medium text-green-700 shadow-sm">
-                  Compte créé avec succès. Redirection en cours...
-                </div>
-              )}
 
               {error && (
                 <div className="mt-6 rounded-2xl border border-red-200 bg-red-50/90 px-4 py-3 text-sm font-medium text-red-700 shadow-sm">
@@ -242,7 +245,8 @@ export default function RegisterPage() {
 
                 <button
                   type="submit"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-dark2 px-6 py-3.5 font-semibold text-white shadow-md transition hover:scale-[1.02] hover:opacity-95"
+                  disabled={loading}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-dark2 px-6 py-3.5 font-semibold text-white shadow-md transition hover:scale-[1.02] hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   <UserPlus size={18} />
                   Créer mon compte
@@ -260,8 +264,20 @@ export default function RegisterPage() {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
+
+      {loading && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 rounded-2xl bg-white px-6 py-5 shadow-xl">
+            <span className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-primary"></span>
+
+            <p className="text-sm font-semibold text-dark">
+              Création du compte...
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
