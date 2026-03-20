@@ -1,11 +1,10 @@
-import AdminPage from "./admin";
+import AdminDashboardPage from "./admin";
 
 export const metadata = {
-  title: "Page Admin | Coffee House",
-  description:
-    "Découvrez notre sélection de cafés artisanaux chez Coffee House.",
+  title: "Dashboard Admin | Coffee House",
+  description: "Espace d'administration Coffee House.",
 };
 
 export default function Page() {
-  return <AdminPage />;
+  return <AdminDashboardPage />;
 }

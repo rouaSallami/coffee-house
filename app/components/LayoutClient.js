@@ -10,7 +10,10 @@ export default function LayoutClient({ children }) {
   const pathname = usePathname();
   const [checked, setChecked] = useState(false);
 
-  const hide = pathname === "/login" || pathname === "/register";
+  const hide =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname.startsWith("/admin");
 
   useEffect(() => {
     const isAuthenticated =
