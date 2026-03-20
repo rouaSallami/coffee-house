@@ -14,7 +14,6 @@ export default function LoginPage() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -33,9 +32,12 @@ export default function LoginPage() {
   setLoading(true);
 
   try {
+    const isAdmin = form.email.trim().toLowerCase() === "admin@coffeehouse.com";
+
     const fakeUser = {
-      name: "Client Coffee House",
+      name: isAdmin ? "Admin Coffee House" : "Client Coffee House",
       email: form.email,
+      role: isAdmin ? "admin" : "user",
     };
 
     localStorage.setItem("user", JSON.stringify(fakeUser));
@@ -45,16 +47,17 @@ export default function LoginPage() {
     window.dispatchEvent(new Event("cartUpdated"));
     window.dispatchEvent(new Event("favoritesUpdated"));
 
-    setLoading(true);
+    setTimeout(() => {
+      toast.success(
+        isAdmin
+          ? `Bienvenue ${fakeUser.name} 👨‍💼`
+          : `Bienvenue ${fakeUser.name} ☕`
+      );
+    }, 1000);
 
-setTimeout(() => {
-  toast.success(`Bienvenue ${fakeUser.name} ☕`);
-}, 1000);
-
-setTimeout(() => {
-  window.location.href = "/";
-}, 2000);
-
+    setTimeout(() => {
+      window.location.href = isAdmin ? "/admin" : "/";
+    }, 2000);
   } catch (err) {
     setError("Une erreur est survenue. Veuillez réessayer.");
     setLoading(false);

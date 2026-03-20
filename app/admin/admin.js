@@ -110,6 +110,49 @@ const [usersCount, setUsersCount] = useState(0);
   )}
 </div>
 
+
+<div className="mb-10 rounded-3xl border border-dark/10 bg-base p-8 shadow-sm">
+  <h2 className="mb-6 text-xl font-bold text-dark">
+    Actions rapides
+  </h2>
+
+  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <a
+      href="/admin/cafes"
+      className="rounded-2xl border border-dark/10 bg-white/40 p-5 transition hover:bg-white/60"
+    >
+      <p className="text-sm text-dark/60">Gestion</p>
+      <p className="mt-2 text-lg font-bold text-dark">Cafés</p>
+      <p className="mt-1 text-sm text-dark/70">
+        Voir, ajouter et modifier les cafés
+      </p>
+    </a>
+
+    <a
+      href="/admin/addons"
+      className="rounded-2xl border border-dark/10 bg-white/40 p-5 transition hover:bg-white/60"
+    >
+      <p className="text-sm text-dark/60">Gestion</p>
+      <p className="mt-2 text-lg font-bold text-dark">Addons</p>
+      <p className="mt-1 text-sm text-dark/70">
+        Gérer les suppléments disponibles
+      </p>
+    </a>
+
+    <a
+      href="/admin/commandes"
+      className="rounded-2xl border border-dark/10 bg-white/40 p-5 transition hover:bg-white/60"
+    >
+      <p className="text-sm text-dark/60">Suivi</p>
+      <p className="mt-2 text-lg font-bold text-dark">Commandes</p>
+      <p className="mt-1 text-sm text-dark/70">
+        Consulter et suivre les commandes
+      </p>
+    </a>
+  </div>
+</div>
+
+
       {/* INFO BOX */}
       <div className="rounded-3xl border border-dark/10 bg-base p-8 shadow-sm">
         <p className="font-semibold text-dark">

@@ -140,7 +140,11 @@ export default function CheckoutPage() {
                     createdAt: new Date().toISOString(),
                   };
 
-                  localStorage.setItem("lastOrder", JSON.stringify(order));
+                  const existingOrders = JSON.parse(localStorage.getItem("orders")) || [];
+localStorage.setItem("orders", JSON.stringify([order, ...existingOrders]));
+
+localStorage.setItem("lastOrder", JSON.stringify(order));
+window.dispatchEvent(new Event("orderUpdated"));
 
 const currentPoints =
   Number(localStorage.getItem("points")) || 0;
