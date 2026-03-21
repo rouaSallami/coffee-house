@@ -32,7 +32,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_45%)]" />
       <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary to-secondary/80" />
 
-      <div className="relative max-w-6xl mx-auto px-6 pt-24 pb-8 w-full">
+      <div className="relative max-w-6xl mx-auto px-6 pt-28 pb-8 w-full">
         <div className="grid lg:grid-cols-2 items-center gap-10">
           {/* LEFT CONTENT */}
           <div className="space-y-5 mx-auto lg:mx-0">

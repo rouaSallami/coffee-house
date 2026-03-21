@@ -1,4 +1,4 @@
-import AdminDashboardPage from "./admin";
+import AdminDashboardPage from "./dashbord";
 
 export const metadata = {
   title: "Dashboard Admin | Coffee House",
