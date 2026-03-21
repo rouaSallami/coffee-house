@@ -5,19 +5,25 @@ import { useEffect, useMemo, useState } from "react";
 export default function AdminCommandesPage() {
   const [orders, setOrders] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedMode, setSelectedMode] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderToDelete, setOrderToDelete] = useState(null);
 
   useEffect(() => {
-    const storedOrders = JSON.parse(localStorage.getItem("orders")) || [];
-    setOrders(storedOrders);
+    try {
+      const storedOrders = JSON.parse(localStorage.getItem("orders") || "[]");
+      setOrders(Array.isArray(storedOrders) ? storedOrders : []);
+    } catch {
+      setOrders([]);
+    }
   }, []);
 
   const getStatusesByMode = (mode) => {
     if (mode === "livraison") {
       return [
         { key: "confirmed", label: "Commande confirmée" },
-        { key: "preparing", label: "Préparation" },
+        { key: "preparing", label: "En préparation" },
         { key: "out_for_delivery", label: "En livraison" },
         { key: "delivered", label: "Livrée" },
       ];
@@ -26,7 +32,7 @@ export default function AdminCommandesPage() {
     if (mode === "emporter") {
       return [
         { key: "confirmed", label: "Commande confirmée" },
-        { key: "preparing", label: "Préparation" },
+        { key: "preparing", label: "En préparation" },
         { key: "ready", label: "Prête à récupérer" },
         { key: "delivered", label: "Récupérée" },
       ];
@@ -35,7 +41,7 @@ export default function AdminCommandesPage() {
     if (mode === "surplace") {
       return [
         { key: "confirmed", label: "Commande confirmée" },
-        { key: "preparing", label: "Préparation" },
+        { key: "preparing", label: "En préparation" },
         { key: "ready", label: "Prête à être servie" },
         { key: "delivered", label: "Servie" },
       ];
@@ -66,20 +72,17 @@ export default function AdminCommandesPage() {
     surplace: "bg-beige/60 text-dark border border-dark/10",
   };
 
-  const filteredOrders = useMemo(() => {
-    if (selectedStatus === "all") return orders;
-    return orders.filter((order) => order.status === selectedStatus);
-  }, [orders, selectedStatus]);
-
-  const handleUpdateStatus = (orderId, newStatus) => {
-    const updatedOrders = orders.map((order) =>
-      order.id === orderId ? { ...order, status: newStatus } : order
-    );
-
+  const persistOrders = (updatedOrders) => {
     setOrders(updatedOrders);
     localStorage.setItem("orders", JSON.stringify(updatedOrders));
 
-    const updatedLastOrder = updatedOrders[0] || null;
+    const updatedLastOrder =
+      updatedOrders.length > 0
+        ? [...updatedOrders].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          )[0]
+        : null;
+
     if (updatedLastOrder) {
       localStorage.setItem("lastOrder", JSON.stringify(updatedLastOrder));
     } else {
@@ -87,8 +90,50 @@ export default function AdminCommandesPage() {
     }
 
     window.dispatchEvent(new Event("orderUpdated"));
+  };
 
-    if (selectedOrder && selectedOrder.id === orderId) {
+  const filteredOrders = useMemo(() => {
+    let result = [...orders];
+
+    if (selectedStatus !== "all") {
+      result = result.filter((order) => order.status === selectedStatus);
+    }
+
+    if (selectedMode !== "all") {
+      result = result.filter((order) => order.mode === selectedMode);
+    }
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+
+      result = result.filter((order) => {
+        const orderId = String(order.id || "").toLowerCase();
+        const customerName = order.customer?.name?.toLowerCase() || "";
+        const customerPhone = order.customer?.phone?.toLowerCase() || "";
+        const orderMode = order.mode?.toLowerCase() || "";
+
+        return (
+          orderId.includes(term) ||
+          customerName.includes(term) ||
+          customerPhone.includes(term) ||
+          orderMode.includes(term)
+        );
+      });
+    }
+
+    result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return result;
+  }, [orders, selectedStatus, selectedMode, searchTerm]);
+
+  const handleUpdateStatus = (orderId, newStatus) => {
+    const updatedOrders = orders.map((order) =>
+      order.id === orderId ? { ...order, status: newStatus } : order
+    );
+
+    persistOrders(updatedOrders);
+
+    if (selectedOrder?.id === orderId) {
       const updatedSelectedOrder = updatedOrders.find(
         (order) => order.id === orderId
       );
@@ -99,23 +144,18 @@ export default function AdminCommandesPage() {
   const handleDeleteOrder = (orderId) => {
     const updatedOrders = orders.filter((order) => order.id !== orderId);
 
-    setOrders(updatedOrders);
-    localStorage.setItem("orders", JSON.stringify(updatedOrders));
+    persistOrders(updatedOrders);
 
-    const updatedLastOrder = updatedOrders[0] || null;
-    if (updatedLastOrder) {
-      localStorage.setItem("lastOrder", JSON.stringify(updatedLastOrder));
-    } else {
-      localStorage.removeItem("lastOrder");
-    }
-
-    window.dispatchEvent(new Event("orderUpdated"));
-
-    if (selectedOrder && selectedOrder.id === orderId) {
+    if (selectedOrder?.id === orderId) {
       setSelectedOrder(null);
     }
 
     setOrderToDelete(null);
+  };
+
+  const getCountByStatus = (status) => {
+    if (status === "all") return orders.length;
+    return orders.filter((order) => order.status === status).length;
   };
 
   return (
@@ -131,8 +171,30 @@ export default function AdminCommandesPage() {
           </h1>
 
           <p className="mt-3 text-dark/80">
-            Consultez, filtrez et gérez les commandes de votre boutique.
+            Consultez, recherchez, filtrez et gérez les commandes de votre
+            boutique.
           </p>
+        </div>
+
+        <div className="mb-4 grid gap-3 md:grid-cols-2">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Rechercher par numéro, client, téléphone ou mode..."
+            className="w-full rounded-2xl border border-dark/10 bg-white px-4 py-3 text-sm text-dark outline-none transition focus:border-primary"
+          />
+
+          <select
+            value={selectedMode}
+            onChange={(e) => setSelectedMode(e.target.value)}
+            className="w-full rounded-2xl border border-dark/10 bg-white px-4 py-3 text-sm text-dark outline-none transition focus:border-primary"
+          >
+            <option value="all">Tous les modes</option>
+            <option value="livraison">Livraison</option>
+            <option value="emporter">Emporter</option>
+            <option value="surplace">Sur place</option>
+          </select>
         </div>
 
         <div className="mb-6 flex flex-wrap gap-3">
@@ -144,7 +206,7 @@ export default function AdminCommandesPage() {
                 : "border border-dark/10 bg-base text-dark hover:bg-white"
             }`}
           >
-            Toutes
+            Toutes ({getCountByStatus("all")})
           </button>
 
           <button
@@ -155,7 +217,7 @@ export default function AdminCommandesPage() {
                 : "border border-dark/10 bg-base text-dark hover:bg-white"
             }`}
           >
-            Confirmées
+            Confirmées ({getCountByStatus("confirmed")})
           </button>
 
           <button
@@ -166,7 +228,7 @@ export default function AdminCommandesPage() {
                 : "border border-dark/10 bg-base text-dark hover:bg-white"
             }`}
           >
-            Préparation
+            En préparation ({getCountByStatus("preparing")})
           </button>
 
           <button
@@ -177,7 +239,7 @@ export default function AdminCommandesPage() {
                 : "border border-dark/10 bg-base text-dark hover:bg-white"
             }`}
           >
-            Prêtes
+            Prêtes ({getCountByStatus("ready")})
           </button>
 
           <button
@@ -188,7 +250,7 @@ export default function AdminCommandesPage() {
                 : "border border-dark/10 bg-base text-dark hover:bg-white"
             }`}
           >
-            Livraison
+            En livraison ({getCountByStatus("out_for_delivery")})
           </button>
 
           <button
@@ -199,7 +261,7 @@ export default function AdminCommandesPage() {
                 : "border border-dark/10 bg-base text-dark hover:bg-white"
             }`}
           >
-            Terminées
+            Terminées ({getCountByStatus("delivered")})
           </button>
         </div>
 
@@ -254,8 +316,8 @@ export default function AdminCommandesPage() {
                         </div>
 
                         <div className="mt-3 space-y-1 text-sm text-dark/70">
-                          <p>Client : {order.customer?.name}</p>
-                          <p>Total : {Number(order.total).toFixed(2)} DT</p>
+                          <p>Client : {order.customer?.name || "Non renseigné"}</p>
+                          <p>Total : {Number(order.total || 0).toFixed(2)} DT</p>
                           <p>
                             Articles : {totalItems} article
                             {totalItems > 1 ? "s" : ""}
@@ -269,7 +331,7 @@ export default function AdminCommandesPage() {
                           onClick={() => setSelectedOrder(order)}
                           className="rounded-xl border border-dark/10 bg-base px-4 py-2 text-sm font-semibold text-dark transition hover:bg-white"
                         >
-                          Voir détails
+                          Voir les détails
                         </button>
 
                         <button
@@ -321,7 +383,7 @@ export default function AdminCommandesPage() {
                 </h2>
 
                 <p className="mt-2 text-dark/70">
-                  {selectedOrder.customer?.name}
+                  {selectedOrder.customer?.name || "Client non renseigné"}
                 </p>
               </div>
 
@@ -358,7 +420,7 @@ export default function AdminCommandesPage() {
               <div className="rounded-2xl border border-dark/10 bg-white/40 p-4">
                 <p className="text-sm text-dark/60">Total</p>
                 <p className="mt-1 font-bold text-primary">
-                  {Number(selectedOrder.total).toFixed(2)} DT
+                  {Number(selectedOrder.total || 0).toFixed(2)} DT
                 </p>
               </div>
 
@@ -417,9 +479,9 @@ export default function AdminCommandesPage() {
                         </h4>
 
                         <div className="mt-2 space-y-1 text-sm text-dark/70">
-                          <p>Taille : {item.size?.label}</p>
-                          <p>Contenant : {item.container}</p>
-                          <p>Sucre : {item.sugar}%</p>
+                          <p>Taille : {item.size?.label || "Non précisée"}</p>
+                          <p>Contenant : {item.container || "Non précisé"}</p>
+                          <p>Sucre : {item.sugar ?? 0}%</p>
                           <p>
                             Add-ons :{" "}
                             {item.addons?.length > 0
@@ -432,7 +494,7 @@ export default function AdminCommandesPage() {
                       </div>
 
                       <p className="whitespace-nowrap font-bold text-primary">
-                        {(item.totalPrice * item.qty).toFixed(2)} DT
+                        {((item.totalPrice || 0) * (item.qty || 0)).toFixed(2)} DT
                       </p>
                     </div>
                   </div>
@@ -447,9 +509,7 @@ export default function AdminCommandesPage() {
                 return (
                   <button
                     key={status.key}
-                    onClick={() => {
-                      handleUpdateStatus(selectedOrder.id, status.key);
-                    }}
+                    onClick={() => handleUpdateStatus(selectedOrder.id, status.key)}
                     disabled={isActive}
                     className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
                       isActive
@@ -473,7 +533,7 @@ export default function AdminCommandesPage() {
               Confirmer la suppression
             </h2>
 
-            <p className="mt-3 text-dark/75 leading-7">
+            <p className="mt-3 leading-7 text-dark/75">
               Êtes-vous sûr de vouloir supprimer la commande{" "}
               <span className="font-semibold text-primary">
                 #{orderToDelete.id}

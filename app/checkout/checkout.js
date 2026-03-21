@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { getUserData, setUserData } from "../lib/storage";
+import { Sparkles } from "lucide-react";
 
 export default function CheckoutPage() {
   const [mode, setMode] = useState(null);
@@ -48,16 +49,19 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="relative min-h-screen mt-16 overflow-hidden bg-secondary text-dark">
+    <div className="relative min-h-screen pt-20 overflow-hidden bg-secondary text-dark">
       {/* Background glow */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_45%)]" />
       <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary to-secondary/80" />
 
       <div className="relative max-w-6xl mx-auto px-6 py-16">
         <div className="text-center mb-12">
-          <p className="text-dark/70 text-sm font-semibold uppercase tracking-[0.2em]">
-            Votre commande
-          </p>
+          <div className="inline-flex items-center gap-2 rounded-full border border-dark/10 bg-white/45 px-4 py-2 shadow-sm backdrop-blur-sm">
+            <Sparkles size={15} className="text-primary" />
+            <p className="text-[12px] font-semibold uppercase tracking-[0.22em] text-dark/70">
+              Votre commande
+            </p>
+          </div>
 
           <h1 className="text-4xl font-bold text-dark font-heading mt-3">
             Checkout

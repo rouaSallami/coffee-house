@@ -139,30 +139,31 @@ export default function SuiviCommande() {
     order.items?.map((item) => item.coffeeName).join(", ") || "Aucun produit";
 
   return (
-   <div className="relative min-h-screen mt-16 overflow-hidden bg-secondary text-dark">
-  {/* Background glow */}
+   <div className="relative min-h-screen overflow-hidden bg-secondary pt-20 text-dark">
+  {/* Background */}
   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_45%)]" />
   <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary to-secondary/80" />
 
-  <div className="relative max-w-4xl mx-auto px-6 py-16">
+  <div className="relative max-w-4xl mx-auto px-6 py-8 md:py-10">
     {/* Header */}
-    <div className="text-center mb-12">
+    <div className="text-center mb-8 md:mb-10">
       <p className="text-dark/70 text-sm font-semibold uppercase tracking-[0.2em]">
         Votre commande
       </p>
 
-      <h1 className="text-4xl font-bold text-dark mt-3 font-heading">
+      <h1 className="text-3xl font-bold text-dark mt-4 font-heading md:text-4xl">
         Suivi de votre commande
       </h1>
 
-      <p className="text-dark/75 mt-4 max-w-2xl mx-auto leading-7">
+      <p className="text-dark/75 mt-3 max-w-2xl mx-auto leading-7">
         Suivez l’avancement de votre commande en temps réel.
       </p>
     </div>
 
-    {/* Main card */}
-    <div className="rounded-3xl border border-dark/10 bg-white/30 backdrop-blur-md p-8 md:p-10 shadow-xl">
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-10">
+    {/* Card */}
+    <div className="rounded-3xl border border-dark/10 bg-white/30 backdrop-blur-md p-6 md:p-8 shadow-xl">
+      {/* Top */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 mb-8">
         <div>
           <p className="text-sm uppercase tracking-wider text-dark/60 font-semibold">
             Numéro de commande
@@ -186,23 +187,23 @@ export default function SuiviCommande() {
       </div>
 
       {/* Infos */}
-      <div className="grid sm:grid-cols-2 gap-4 mb-10">
-        <div className="rounded-2xl border border-dark/10 bg-white/40 p-5 shadow-sm">
-          <p className="text-sm text-dark2/60 mb-1">Date de commande</p>
+      <div className="grid sm:grid-cols-2 gap-4 mb-8">
+        <div className="rounded-2xl border border-dark/10 bg-white/40 p-4 shadow-sm">
+          <p className="text-sm text-dark2/60 mb-1">Date</p>
           <p className="font-bold text-primary">{formattedDate}</p>
         </div>
 
-        <div className="rounded-2xl border border-dark/10 bg-white/40 p-5 shadow-sm">
+        <div className="rounded-2xl border border-dark/10 bg-white/40 p-4 shadow-sm">
           <p className="text-sm text-dark2/60 mb-1">Mode</p>
           <p className="font-bold text-primary capitalize">{order.mode}</p>
         </div>
 
-        <div className="rounded-2xl border border-dark/10 bg-white/40 p-5 shadow-sm">
+        <div className="rounded-2xl border border-dark/10 bg-white/40 p-4 shadow-sm">
           <p className="text-sm text-dark2/60 mb-1">{infoLabel}</p>
           <p className="font-bold text-primary">{infoValue}</p>
         </div>
 
-        <div className="rounded-2xl border border-dark/10 bg-white/40 p-5 shadow-sm">
+        <div className="rounded-2xl border border-dark/10 bg-white/40 p-4 shadow-sm">
           <p className="text-sm text-dark2/60 mb-1">Total</p>
           <p className="font-bold text-primary">
             {Number(order.total).toFixed(2)} DT
@@ -211,13 +212,15 @@ export default function SuiviCommande() {
       </div>
 
       {/* Résumé */}
-      <div className="mb-10 rounded-2xl border border-dark/10 bg-white/40 p-5 shadow-sm">
-        <p className="text-primary mb-2 font-semibold">Résumé :</p>
+      <div className="mb-8 rounded-2xl border border-dark/10 bg-white/40 p-4 shadow-sm">
+        <p className="text-primary font-semibold mb-1">Résumé :</p>
         <p className="text-dark2/85 leading-7">{orderSummary}</p>
       </div>
 
       {/* Steps */}
-      <div className="space-y-5">
+      <div className="relative pl-6 space-y-5">
+        <div className="absolute left-[18px] top-0 h-full w-[2px] bg-dark/10" />
+
         {steps.map((step, index) => {
           const isActive = index <= currentIndex;
 
@@ -229,7 +232,7 @@ export default function SuiviCommande() {
               }`}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold shadow-sm ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold shadow-sm z-10 ${
                   isActive
                     ? "bg-primary text-dark2"
                     : "bg-white/60 text-dark2 border border-dark/10"
@@ -245,17 +248,17 @@ export default function SuiviCommande() {
       </div>
 
       {/* Actions */}
-      <div className="mt-10 flex flex-col sm:flex-row gap-4">
+      <div className="mt-8 flex flex-col sm:flex-row gap-3">
         <Link
           href="/nosCafes"
-          className="inline-flex justify-center rounded-2xl border border-dark/15 bg-white/40 text-dark2 px-6 py-3 font-semibold transition hover:bg-white/55"
+          className="inline-flex justify-center rounded-2xl border border-dark/15 bg-white/40 text-dark2 px-5 py-3 font-semibold transition hover:bg-white/55"
         >
           Commander autre chose
         </Link>
 
         <Link
           href="/contact"
-          className="inline-flex justify-center rounded-2xl bg-primary text-white px-6 py-3 font-semibold transition hover:opacity-95 shadow-md"
+          className="inline-flex justify-center rounded-2xl bg-primary text-white px-5 py-3 font-semibold transition hover:opacity-95 shadow-md"
         >
           Nous contacter
         </Link>
