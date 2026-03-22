@@ -18,7 +18,7 @@ export default function MesRecompensesPage() {
   const hasReward = points >= goal;
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-secondary pt-20 text-dark">
+    <div className="relative min-h-screen overflow-hidden bg-secondary pt-20 textt-dark2">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_42%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(139,94,60,0.10),transparent_30%)]" />
       <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary to-secondary/85" />
@@ -28,16 +28,16 @@ export default function MesRecompensesPage() {
         <section className="text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-dark/10 bg-white/45 px-4 py-2 shadow-sm backdrop-blur-sm">
             <Sparkles size={15} className="text-primary" />
-            <p className="text-[12px] font-semibold uppercase tracking-[0.22em] text-dark/70">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.22em] textt-dark2/70">
               Programme de fidélité
             </p>
           </div>
 
-          <h1 className="mt-4 font-heading text-4xl font-bold text-dark md:text-5xl">
+          <h1 className="mt-4 font-heading text-4xl font-bold textt-dark2 md:text-5xl">
             Mes récompenses
           </h1>
 
-          <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-dark/75 md:text-lg">
+          <p className="mx-auto mt-3 max-w-2xl leading-7 text-dark/75 md:text-lg">
             Cumulez des points à chaque commande et profitez d’une récompense
             exclusive une fois votre objectif atteint.
           </p>
@@ -53,7 +53,7 @@ export default function MesRecompensesPage() {
                 </div>
 
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-dark/55">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] textt-dark2/55">
                     Solde actuel
                   </p>
                   <h2 className="mt-1 text-3xl font-bold text-primary md:text-4xl">
@@ -63,11 +63,11 @@ export default function MesRecompensesPage() {
               </div>
 
               <div className="rounded-2xl border border-dark/10 bg-white/45 px-4 py-3 text-left shadow-sm md:text-right">
-                <p className="text-sm text-dark/60">Objectif fidélité</p>
-                <p className="mt-1 text-lg font-semibold text-dark">
+                <p className="text-sm textt-dark2/60">Objectif fidélité</p>
+                <p className="mt-1 text-lg font-semibold textt-dark2">
                   {goal} points
                 </p>
-                <p className="mt-1 text-sm text-dark/60">
+                <p className="mt-1 text-sm textt-dark2/60">
                   1 Mug Coffee House offert
                 </p>
               </div>
@@ -76,7 +76,7 @@ export default function MesRecompensesPage() {
             {/* Progress */}
             <div className="mt-6 rounded-[24px] border border-dark/10 bg-white/45 p-5 shadow-sm">
               <div className="mb-3 flex items-center justify-between text-sm">
-                <span className="text-dark/60">Progression</span>
+                <span className="textt-dark2/60">Progression</span>
                 <span className="font-semibold text-primary">
                   {Math.round(progress)}%
                 </span>
@@ -89,7 +89,7 @@ export default function MesRecompensesPage() {
                 />
               </div>
 
-              <div className="mt-3 flex justify-between text-sm text-dark/60">
+              <div className="mt-3 flex justify-between text-sm textt-dark2/60">
                 <span>0</span>
                 <span>{goal}</span>
               </div>
@@ -117,7 +117,7 @@ export default function MesRecompensesPage() {
                 </div>
               ) : (
                 <div className="rounded-[24px] border border-dark/10 bg-white/45 p-5 shadow-sm">
-                  <p className="leading-7 text-dark">
+                  <p className="leading-7 textt-dark2">
                     Il vous reste{" "}
                     <span className="font-bold text-primary">
                       {remaining} points
@@ -137,7 +137,7 @@ export default function MesRecompensesPage() {
                 <h3 className="font-semibold text-primary">
                   1 commande = plus d’avantages
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-dark/70">
+                <p className="mt-2 text-sm leading-6 textt-dark2/70">
                   Continuez à commander vos cafés préférés pour accumuler encore
                   plus de points.
                 </p>
@@ -150,7 +150,7 @@ export default function MesRecompensesPage() {
                 <h3 className="font-semibold text-primary">
                   Récompense exclusive
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-dark/70">
+                <p className="mt-2 text-sm leading-6 textt-dark2/70">
                   Une fois votre objectif atteint, vous débloquez votre cadeau
                   Coffee House.
                 </p>
@@ -163,7 +163,7 @@ export default function MesRecompensesPage() {
                 <h3 className="font-semibold text-primary">
                   Expérience fidélité
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-dark/70">
+                <p className="mt-2 text-sm leading-6 textt-dark2/70">
                   Un programme simple, moderne et motivant pour récompenser vos
                   commandes régulières.
                 </p>
@@ -175,11 +175,11 @@ export default function MesRecompensesPage() {
         {/* CTA */}
         <section className="mt-8 md:mt-10">
           <div className="rounded-[28px] border border-dark/10 bg-white/30 p-5 text-center shadow-lg backdrop-blur-md md:p-7">
-            <h2 className="font-heading text-2xl font-bold text-dark">
+            <h2 className="font-heading text-2xl font-bold textt-dark2">
               Continuez à cumuler vos points
             </h2>
 
-            <p className="mx-auto mt-3 max-w-2xl leading-7 text-dark/70">
+            <p className="mx-auto mt-3 max-w-2xl leading-7 textt-dark2/70">
               Découvrez nos cafés et passez votre prochaine commande pour vous
               rapprocher encore plus de votre récompense.
             </p>

@@ -140,7 +140,7 @@ export default function ContactPage() {
 
                       <div>
                         <p className="font-semibold text-primary">{item.title}</p>
-                        <p className="mt-1 text-dark/70">{item.text}</p>
+                        <p className="mt-1 text-dark2/70">{item.text}</p>
                       </div>
                     </div>
                   );
@@ -175,7 +175,7 @@ export default function ContactPage() {
 
                       <div>
                         <p className="font-semibold text-primary">{item.title}</p>
-                        <p className="mt-1 text-dark/70">{item.text}</p>
+                        <p className="mt-1 text-dark2/70">{item.text}</p>
                         <p className="mt-1 text-sm text-dark/55">
                           {item.subtext}
                         </p>
@@ -231,7 +231,7 @@ export default function ContactPage() {
                     onChange={handleChange}
                     placeholder="Votre nom"
                     required
-                    className="w-full rounded-2xl border border-dark/10 bg-white/60 px-4 py-3 text-dark outline-none backdrop-blur-sm transition-all duration-300 placeholder:text-dark/40 focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                    className="w-full rounded-2xl border border-dark/10 bg-white/60 px-4 py-3 text-dark outline-none backdrop-blur-sm transition-all duration-300 placeholder:text-dark2/40 focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
 
@@ -245,7 +245,7 @@ export default function ContactPage() {
                     value={form.phone}
                     onChange={handleChange}
                     placeholder="Votre téléphone"
-                    className="w-full rounded-2xl border border-dark/10 bg-white/60 px-4 py-3 text-dark outline-none backdrop-blur-sm transition-all duration-300 placeholder:text-dark/40 focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                    className="w-full rounded-2xl border border-dark/10 bg-white/60 px-4 py-3 text-dark outline-none backdrop-blur-sm transition-all duration-300 placeholder:text-dark2/40 focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
               </div>
@@ -261,7 +261,7 @@ export default function ContactPage() {
                   onChange={handleChange}
                   placeholder="Votre email"
                   required
-                  className="w-full rounded-2xl border border-dark/10 bg-white/60 px-4 py-3 text-dark outline-none backdrop-blur-sm transition-all duration-300 placeholder:text-dark/40 focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-2xl border border-dark/10 bg-white/60 px-4 py-3 text-dark outline-none backdrop-blur-sm transition-all duration-300 placeholder:text-dark2/40 focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
@@ -276,7 +276,7 @@ export default function ContactPage() {
                   onChange={handleChange}
                   placeholder="Sujet de votre message"
                   required
-                  className="w-full rounded-2xl border border-dark/10 bg-white/60 px-4 py-3 text-dark outline-none backdrop-blur-sm transition-all duration-300 placeholder:text-dark/40 focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-2xl border border-dark/10 bg-white/60 px-4 py-3 text-dark outline-none backdrop-blur-sm transition-all duration-300 placeholder:text-dark2/40 focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
@@ -290,11 +290,11 @@ export default function ContactPage() {
                   onChange={handleChange}
                   placeholder="Écrivez votre message..."
                   required
-                  className="h-32 w-full resize-none rounded-2xl border border-dark/10 bg-white/60 px-4 py-3 text-dark outline-none backdrop-blur-sm transition-all duration-300 placeholder:text-dark/40 focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+                  className="h-32 w-full resize-none rounded-2xl border border-dark/10 bg-white/60 px-4 py-3 text-dark outline-none backdrop-blur-sm transition-all duration-300 placeholder:text-dark2/40 focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
-              <div className="pt-1 flex justify-center sm:justify-start">
+              <div className="pt-1 flex justify-center">
                 <button
                   type="submit"
                   className="inline-flex min-w-[190px] items-center justify-center gap-2 rounded-2xl bg-dark px-5 py-3 font-semibold text-accent shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:opacity-95"

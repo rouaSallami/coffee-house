@@ -209,7 +209,7 @@ export default function Navbar() {
             </Link>
 
             <Link
-              href="/login"
+              href="/mon-compte"
               className={iconButtonClass(pathname === "/login")}
               aria-label="Compte"
             >
@@ -344,7 +344,7 @@ export default function Navbar() {
                   </Link>
 
                   <Link
-                    href="/login"
+                    href="/mon-compte"
                     onClick={closeMenu}
                     className={iconButtonClass(pathname === "/login")}
                     aria-label="Compte"

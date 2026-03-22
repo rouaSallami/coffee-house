@@ -60,21 +60,21 @@ export default function Footer() {
               </p>
 
               <div className="mt-6 space-y-3">
-                <div className="flex items-center gap-3 rounded-2xl bg-white/55 px-4 py-3 text-sm text-dark/75">
+                <div className="flex items-center gap-3 rounded-2xl bg-white/35 px-4 py-3 text-sm text-dark2/75">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Coffee size={16} />
                   </div>
                   <span>Commande simple et rapide</span>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-2xl bg-white/55 px-4 py-3 text-sm text-dark/75">
+                <div className="flex items-center gap-3 rounded-2xl bg-white/35 px-4 py-3 text-sm text-dark2/75">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Truck size={16} />
                   </div>
                   <span>Livraison disponible</span>
                 </div>
 
-                <div className="flex items-center gap-3 rounded-2xl bg-white/55 px-4 py-3 text-sm text-dark/75">
+                <div className="flex items-center gap-3 rounded-2xl bg-white/35 px-4 py-3 text-sm text-dark2/75">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <ShieldCheck size={16} />
                   </div>
@@ -177,7 +177,7 @@ export default function Footer() {
               © {new Date().getFullYear()} Coffee House. Tous droits réservés.
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-dark/65">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-dark2/65">
               <span className="rounded-full border border-dark/10 bg-white/50 px-4 py-2">
                 Paiement à la livraison
               </span>
