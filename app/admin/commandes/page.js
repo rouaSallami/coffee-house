@@ -2,8 +2,27 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import OrdersHeader from "@/components/admin/commandes/OrdersHeader";
+import OrdersToolbar from "@/components/admin/commandes/OrdersToolbar";
+import OrdersStatusFilters from "@/components/admin/commandes/OrdersStatusFilters";
+import OrdersList from "@/components/admin/commandes/OrdersList";
+import OrderDetailsModal from "@/components/admin/commandes/OrderDetailsModal";
+import DeleteOrderModal from "@/components/admin/commandes/DeleteOrderModal";
+
+import {
+  normalizeOrders,
+  filterOrders,
+  getCountByStatus,
+} from "@/lib/admin/commandes/ordersUtils";
+import {
+  getOrdersFromStorage,
+  saveOrdersToStorage,
+} from "@/lib/api/admin/orders";
+
 export default function AdminCommandesPage() {
   const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedMode, setSelectedMode] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -11,127 +30,35 @@ export default function AdminCommandesPage() {
   const [orderToDelete, setOrderToDelete] = useState(null);
 
   useEffect(() => {
-    try {
-      const storedOrders = JSON.parse(localStorage.getItem("orders") || "[]");
-      setOrders(Array.isArray(storedOrders) ? storedOrders : []);
-    } catch {
-      setOrders([]);
-    }
+    const loadOrders = async () => {
+      try {
+        const storedOrders = await getOrdersFromStorage();
+        setOrders(normalizeOrders(storedOrders));
+      } catch {
+        setOrders([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadOrders();
   }, []);
 
-  const getStatusesByMode = (mode) => {
-    if (mode === "livraison") {
-      return [
-        { key: "confirmed", label: "Commande confirmée" },
-        { key: "preparing", label: "En préparation" },
-        { key: "out_for_delivery", label: "En livraison" },
-        { key: "delivered", label: "Livrée" },
-      ];
-    }
-
-    if (mode === "emporter") {
-      return [
-        { key: "confirmed", label: "Commande confirmée" },
-        { key: "preparing", label: "En préparation" },
-        { key: "ready", label: "Prête à récupérer" },
-        { key: "delivered", label: "Récupérée" },
-      ];
-    }
-
-    if (mode === "surplace") {
-      return [
-        { key: "confirmed", label: "Commande confirmée" },
-        { key: "preparing", label: "En préparation" },
-        { key: "ready", label: "Prête à être servie" },
-        { key: "delivered", label: "Servie" },
-      ];
-    }
-
-    return [];
-  };
-
-  const getStatusLabel = (order) => {
-    const statuses = getStatusesByMode(order.mode);
-    return (
-      statuses.find((status) => status.key === order.status)?.label ||
-      order.status
-    );
-  };
-
-  const statusStyles = {
-    confirmed: "bg-creamy text-primary border border-primary/15",
-    preparing: "bg-secondary/15 text-primary border border-secondary/30",
-    out_for_delivery: "bg-beige/60 text-dark border border-dark/10",
-    ready: "bg-beige/60 text-dark border border-dark/10",
-    delivered: "bg-primary text-white border border-primary",
-  };
-
-  const modeStyles = {
-    livraison: "bg-secondary/20 text-marron border border-secondary/30",
-    emporter: "bg-creamy text-primary border border-primary/15",
-    surplace: "bg-beige/60 text-dark border border-dark/10",
-  };
-
-  const persistOrders = (updatedOrders) => {
+  const persistOrders = async (updatedOrders) => {
     setOrders(updatedOrders);
-    localStorage.setItem("orders", JSON.stringify(updatedOrders));
-
-    const updatedLastOrder =
-      updatedOrders.length > 0
-        ? [...updatedOrders].sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-          )[0]
-        : null;
-
-    if (updatedLastOrder) {
-      localStorage.setItem("lastOrder", JSON.stringify(updatedLastOrder));
-    } else {
-      localStorage.removeItem("lastOrder");
-    }
-
-    window.dispatchEvent(new Event("orderUpdated"));
+    await saveOrdersToStorage(updatedOrders);
   };
 
   const filteredOrders = useMemo(() => {
-    let result = [...orders];
-
-    if (selectedStatus !== "all") {
-      result = result.filter((order) => order.status === selectedStatus);
-    }
-
-    if (selectedMode !== "all") {
-      result = result.filter((order) => order.mode === selectedMode);
-    }
-
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-
-      result = result.filter((order) => {
-        const orderId = String(order.id || "").toLowerCase();
-        const customerName = order.customer?.name?.toLowerCase() || "";
-        const customerPhone = order.customer?.phone?.toLowerCase() || "";
-        const orderMode = order.mode?.toLowerCase() || "";
-
-        return (
-          orderId.includes(term) ||
-          customerName.includes(term) ||
-          customerPhone.includes(term) ||
-          orderMode.includes(term)
-        );
-      });
-    }
-
-    result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    return result;
+    return filterOrders(orders, selectedStatus, selectedMode, searchTerm);
   }, [orders, selectedStatus, selectedMode, searchTerm]);
 
-  const handleUpdateStatus = (orderId, newStatus) => {
+  const handleUpdateStatus = async (orderId, newStatus) => {
     const updatedOrders = orders.map((order) =>
       order.id === orderId ? { ...order, status: newStatus } : order
     );
 
-    persistOrders(updatedOrders);
+    await persistOrders(updatedOrders);
 
     if (selectedOrder?.id === orderId) {
       const updatedSelectedOrder = updatedOrders.find(
@@ -141,10 +68,10 @@ export default function AdminCommandesPage() {
     }
   };
 
-  const handleDeleteOrder = (orderId) => {
+  const handleDeleteOrder = async (orderId) => {
     const updatedOrders = orders.filter((order) => order.id !== orderId);
 
-    persistOrders(updatedOrders);
+    await persistOrders(updatedOrders);
 
     if (selectedOrder?.id === orderId) {
       setSelectedOrder(null);
@@ -153,412 +80,50 @@ export default function AdminCommandesPage() {
     setOrderToDelete(null);
   };
 
-  const getCountByStatus = (status) => {
-    if (status === "all") return orders.length;
-    return orders.filter((order) => order.status === status).length;
+  const handleGetCountByStatus = (status) => {
+    return getCountByStatus(orders, status);
   };
 
   return (
     <>
       <div>
-        <div className="mb-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-secondary">
-            Administration
-          </p>
+        <OrdersHeader />
 
-          <h1 className="mt-2 text-4xl font-bold text-dark">
-            Gestion des commandes
-          </h1>
+        <OrdersToolbar
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          selectedMode={selectedMode}
+          setSelectedMode={setSelectedMode}
+          isLoading={isLoading}
+        />
 
-          <p className="mt-3 text-dark/80">
-            Consultez, recherchez, filtrez et gérez les commandes de votre
-            boutique.
-          </p>
-        </div>
+        <OrdersStatusFilters
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          getCountByStatus={handleGetCountByStatus}
+          isLoading={isLoading}
+        />
 
-        <div className="mb-4 grid gap-3 md:grid-cols-2">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher par numéro, client, téléphone ou mode..."
-            className="w-full rounded-2xl border border-dark/10 bg-white px-4 py-3 text-sm text-dark outline-none transition focus:border-primary"
-          />
-
-          <select
-            value={selectedMode}
-            onChange={(e) => setSelectedMode(e.target.value)}
-            className="w-full rounded-2xl border border-dark/10 bg-white px-4 py-3 text-sm text-dark outline-none transition focus:border-primary"
-          >
-            <option value="all">Tous les modes</option>
-            <option value="livraison">Livraison</option>
-            <option value="emporter">Emporter</option>
-            <option value="surplace">Sur place</option>
-          </select>
-        </div>
-
-        <div className="mb-6 flex flex-wrap gap-3">
-          <button
-            onClick={() => setSelectedStatus("all")}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              selectedStatus === "all"
-                ? "bg-primary text-white"
-                : "border border-dark/10 bg-base text-dark hover:bg-white"
-            }`}
-          >
-            Toutes ({getCountByStatus("all")})
-          </button>
-
-          <button
-            onClick={() => setSelectedStatus("confirmed")}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              selectedStatus === "confirmed"
-                ? "bg-primary text-white"
-                : "border border-dark/10 bg-base text-dark hover:bg-white"
-            }`}
-          >
-            Confirmées ({getCountByStatus("confirmed")})
-          </button>
-
-          <button
-            onClick={() => setSelectedStatus("preparing")}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              selectedStatus === "preparing"
-                ? "bg-primary text-white"
-                : "border border-dark/10 bg-base text-dark hover:bg-white"
-            }`}
-          >
-            En préparation ({getCountByStatus("preparing")})
-          </button>
-
-          <button
-            onClick={() => setSelectedStatus("ready")}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              selectedStatus === "ready"
-                ? "bg-primary text-white"
-                : "border border-dark/10 bg-base text-dark hover:bg-white"
-            }`}
-          >
-            Prêtes ({getCountByStatus("ready")})
-          </button>
-
-          <button
-            onClick={() => setSelectedStatus("out_for_delivery")}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              selectedStatus === "out_for_delivery"
-                ? "bg-primary text-white"
-                : "border border-dark/10 bg-base text-dark hover:bg-white"
-            }`}
-          >
-            En livraison ({getCountByStatus("out_for_delivery")})
-          </button>
-
-          <button
-            onClick={() => setSelectedStatus("delivered")}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-              selectedStatus === "delivered"
-                ? "bg-primary text-white"
-                : "border border-dark/10 bg-base text-dark hover:bg-white"
-            }`}
-          >
-            Terminées ({getCountByStatus("delivered")})
-          </button>
-        </div>
-
-        <div className="rounded-3xl border border-dark/10 bg-base p-8 shadow-sm">
-          {filteredOrders.length === 0 ? (
-            <p className="text-dark/60">Aucune commande trouvée.</p>
-          ) : (
-            <div className="space-y-4">
-              {filteredOrders.map((order) => {
-                const totalItems =
-                  order.items?.reduce((sum, item) => sum + item.qty, 0) || 0;
-
-                const formattedDate = order.createdAt
-                  ? new Date(order.createdAt).toLocaleString("fr-FR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  : "Date indisponible";
-
-                return (
-                  <div
-                    key={order.id}
-                    className="rounded-2xl border border-dark/10 bg-white/40 p-5 shadow-sm"
-                  >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <h2 className="text-lg font-bold text-dark">
-                            Commande #{order.id}
-                          </h2>
-
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              modeStyles[order.mode] ||
-                              "bg-creamy text-primary border border-primary/15"
-                            }`}
-                          >
-                            {order.mode}
-                          </span>
-
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              statusStyles[order.status] ||
-                              "bg-creamy text-primary border border-primary/15"
-                            }`}
-                          >
-                            {getStatusLabel(order)}
-                          </span>
-                        </div>
-
-                        <div className="mt-3 space-y-1 text-sm text-dark/70">
-                          <p>Client : {order.customer?.name || "Non renseigné"}</p>
-                          <p>Total : {Number(order.total || 0).toFixed(2)} DT</p>
-                          <p>
-                            Articles : {totalItems} article
-                            {totalItems > 1 ? "s" : ""}
-                          </p>
-                          <p>Date : {formattedDate}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="rounded-xl border border-dark/10 bg-base px-4 py-2 text-sm font-semibold text-dark transition hover:bg-white"
-                        >
-                          Voir les détails
-                        </button>
-
-                        <button
-                          onClick={() => setOrderToDelete(order)}
-                          className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
-                        >
-                          Supprimer
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      {getStatusesByMode(order.mode).map((status) => {
-                        const isActive = order.status === status.key;
-
-                        return (
-                          <button
-                            key={status.key}
-                            onClick={() =>
-                              handleUpdateStatus(order.id, status.key)
-                            }
-                            disabled={isActive}
-                            className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-                              isActive
-                                ? "bg-primary text-white cursor-not-allowed opacity-90"
-                                : "border border-dark/10 bg-base text-dark hover:bg-white"
-                            }`}
-                          >
-                            {status.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <OrdersList
+          orders={filteredOrders}
+          isLoading={isLoading}
+          onView={setSelectedOrder}
+          onDelete={setOrderToDelete}
+          onUpdateStatus={handleUpdateStatus}
+        />
       </div>
 
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-dark/10 bg-base p-6 shadow-xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-bold text-dark">
-                  Commande #{selectedOrder.id}
-                </h2>
+      <OrderDetailsModal
+        order={selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        onUpdateStatus={handleUpdateStatus}
+      />
 
-                <p className="mt-2 text-dark/70">
-                  {selectedOrder.customer?.name || "Client non renseigné"}
-                </p>
-              </div>
-
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="rounded-xl border border-dark/10 bg-white px-4 py-2 text-sm font-semibold text-dark transition hover:bg-base"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-dark/10 bg-white/40 p-4">
-                <p className="text-sm text-dark/60">Mode</p>
-                <p className="mt-1 font-bold text-dark capitalize">
-                  {selectedOrder.mode}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-dark/10 bg-white/40 p-4">
-                <p className="text-sm text-dark/60">Statut</p>
-                <p className="mt-1 font-bold text-primary">
-                  {getStatusLabel(selectedOrder)}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-dark/10 bg-white/40 p-4">
-                <p className="text-sm text-dark/60">Téléphone</p>
-                <p className="mt-1 font-bold text-dark">
-                  {selectedOrder.customer?.phone || "—"}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-dark/10 bg-white/40 p-4">
-                <p className="text-sm text-dark/60">Total</p>
-                <p className="mt-1 font-bold text-primary">
-                  {Number(selectedOrder.total || 0).toFixed(2)} DT
-                </p>
-              </div>
-
-              {selectedOrder.customer?.address && (
-                <div className="rounded-2xl border border-dark/10 bg-white/40 p-4 md:col-span-2">
-                  <p className="text-sm text-dark/60">Adresse</p>
-                  <p className="mt-1 font-bold text-dark">
-                    {selectedOrder.customer.address}
-                  </p>
-                </div>
-              )}
-
-              {selectedOrder.customer?.instructions && (
-                <div className="rounded-2xl border border-dark/10 bg-white/40 p-4 md:col-span-2">
-                  <p className="text-sm text-dark/60">Instructions</p>
-                  <p className="mt-1 text-dark">
-                    {selectedOrder.customer.instructions}
-                  </p>
-                </div>
-              )}
-
-              {selectedOrder.customer?.pickupTime && (
-                <div className="rounded-2xl border border-dark/10 bg-white/40 p-4 md:col-span-2">
-                  <p className="text-sm text-dark/60">Heure de retrait</p>
-                  <p className="mt-1 font-bold text-dark">
-                    {selectedOrder.customer.pickupTime}
-                  </p>
-                </div>
-              )}
-
-              {selectedOrder.customer?.note && (
-                <div className="rounded-2xl border border-dark/10 bg-white/40 p-4 md:col-span-2">
-                  <p className="text-sm text-dark/60">Note</p>
-                  <p className="mt-1 text-dark">
-                    {selectedOrder.customer.note}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6 rounded-2xl border border-dark/10 bg-white/40 p-5">
-              <h3 className="text-lg font-bold text-dark">
-                Produits commandés
-              </h3>
-
-              <div className="mt-4 space-y-4">
-                {selectedOrder.items?.map((item, index) => (
-                  <div
-                    key={`${item.id}-${index}`}
-                    className="rounded-2xl border border-dark/10 bg-base p-4"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h4 className="font-bold text-dark">
-                          {item.coffeeName}
-                        </h4>
-
-                        <div className="mt-2 space-y-1 text-sm text-dark/70">
-                          <p>Taille : {item.size?.label || "Non précisée"}</p>
-                          <p>Contenant : {item.container || "Non précisé"}</p>
-                          <p>Sucre : {item.sugar ?? 0}%</p>
-                          <p>
-                            Add-ons :{" "}
-                            {item.addons?.length > 0
-                              ? item.addons.map((a) => a.name).join(", ")
-                              : "Aucun"}
-                          </p>
-                          {item.note && <p>Note : {item.note}</p>}
-                          <p>Quantité : {item.qty}</p>
-                        </div>
-                      </div>
-
-                      <p className="whitespace-nowrap font-bold text-primary">
-                        {((item.totalPrice || 0) * (item.qty || 0)).toFixed(2)} DT
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              {getStatusesByMode(selectedOrder.mode).map((status) => {
-                const isActive = selectedOrder.status === status.key;
-
-                return (
-                  <button
-                    key={status.key}
-                    onClick={() => handleUpdateStatus(selectedOrder.id, status.key)}
-                    disabled={isActive}
-                    className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                      isActive
-                        ? "bg-primary text-white cursor-not-allowed opacity-90"
-                        : "border border-dark/10 bg-white text-dark hover:bg-base"
-                    }`}
-                  >
-                    {status.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {orderToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-dark/10 bg-base p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-dark">
-              Confirmer la suppression
-            </h2>
-
-            <p className="mt-3 leading-7 text-dark/75">
-              Êtes-vous sûr de vouloir supprimer la commande{" "}
-              <span className="font-semibold text-primary">
-                #{orderToDelete.id}
-              </span>{" "}
-              ?
-            </p>
-
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setOrderToDelete(null)}
-                className="flex-1 rounded-xl border border-dark/10 bg-white px-4 py-3 text-sm font-semibold text-dark transition hover:bg-base"
-              >
-                Annuler
-              </button>
-
-              <button
-                onClick={() => handleDeleteOrder(orderToDelete.id)}
-                className="flex-1 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-100"
-              >
-                Oui, supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteOrderModal
+        order={orderToDelete}
+        onClose={() => setOrderToDelete(null)}
+        onConfirm={handleDeleteOrder}
+      />
     </>
   );
 }
