@@ -14,6 +14,7 @@ import {
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 
+
 export default function RegisterPage() {
   const [form, setForm] = useState({
     name: "",
@@ -52,28 +53,44 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const fakeUser = {
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-      };
+     
+const res = await fetch("/api/auth/register", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+  body: JSON.stringify({
+    name: form.name,
+    phone: form.phone,
+    email: form.email,
+    password: form.password,
+    password_confirmation: form.password_confirmation,
+  }),
+});
 
-      localStorage.setItem("user", JSON.stringify(fakeUser));
-      localStorage.setItem("isAuthenticated", "true");
+const data = await res.json();
 
-      window.dispatchEvent(new Event("authChanged"));
-      window.dispatchEvent(new Event("cartUpdated"));
-      window.dispatchEvent(new Event("favoritesUpdated"));
+if (!res.ok) {
+  throw new Error(data.message || "Erreur lors de l'inscription");
+}
 
-      setTimeout(() => {
-        toast.success("Compte créé avec succès 🎉");
-      }, 1000);
+localStorage.setItem("user", JSON.stringify(data.user));
+localStorage.setItem("isAuthenticated", "true");
 
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 2000);
+window.dispatchEvent(new Event("authChanged"));
+window.dispatchEvent(new Event("cartUpdated"));
+window.dispatchEvent(new Event("favoritesUpdated"));
+
+setTimeout(() => {
+  toast.success("Compte créé avec succès 🎉");
+}, 1000);
+
+setTimeout(() => {
+  window.location.href = "/";
+}, 2000);
     } catch (err) {
-      setError("Une erreur est survenue. Veuillez réessayer.");
+      setError(err.message || "Une erreur est survenue. Veuillez réessayer.");
       setLoading(false);
     }
   };

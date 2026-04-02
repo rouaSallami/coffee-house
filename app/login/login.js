@@ -32,35 +32,45 @@ export default function LoginPage() {
   setLoading(true);
 
   try {
-    const isAdmin = form.email.trim().toLowerCase() === "admin@coffeehouse.com";
+    const res = await fetch("/api/auth/login", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+  body: JSON.stringify({
+    email: form.email,
+    password: form.password,
+  }),
+});
 
-    const fakeUser = {
-      name: isAdmin ? "Admin Coffee House" : "Client Coffee House",
-      email: form.email,
-      role: isAdmin ? "admin" : "user",
-    };
+const data = await res.json();
 
-    localStorage.setItem("user", JSON.stringify(fakeUser));
-    localStorage.setItem("isAuthenticated", "true");
+if (!res.ok) {
+  throw new Error(data.message || "Erreur lors de la connexion");
+}
 
-    window.dispatchEvent(new Event("authChanged"));
-    window.dispatchEvent(new Event("cartUpdated"));
-    window.dispatchEvent(new Event("favoritesUpdated"));
+localStorage.setItem("user", JSON.stringify(data.user));
+localStorage.setItem("isAuthenticated", "true");
 
-    setTimeout(() => {
-      toast.success(
-        isAdmin
-          ? `Bienvenue ${fakeUser.name} 👨‍💼`
-          : `Bienvenue ${fakeUser.name} ☕`
-      );
-    }, 1000);
+window.dispatchEvent(new Event("authChanged"));
+window.dispatchEvent(new Event("cartUpdated"));
+window.dispatchEvent(new Event("favoritesUpdated"));
 
-    setTimeout(() => {
-      window.location.href = isAdmin ? "/admin" : "/";
-    }, 2000);
+setTimeout(() => {
+  toast.success(
+    data.user?.role === "admin"
+      ? `Bienvenue ${data.user.name} 👨‍💼`
+      : `Bienvenue ${data.user.name} ☕`
+  );
+}, 1000);
+
+setTimeout(() => {
+  window.location.href = data.user?.role === "admin" ? "/admin" : "/";
+}, 2000);
   } catch (err) {
-    setError("Une erreur est survenue. Veuillez réessayer.");
-    setLoading(false);
+    setError(err.message || "Une erreur est survenue. Veuillez réessayer.");
+setLoading(false);
   }
 };
 

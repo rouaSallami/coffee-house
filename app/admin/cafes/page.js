@@ -8,17 +8,23 @@ import CoffeesGrid from "@/components/admin/cafes/CoffeesGrid";
 import CoffeeFormModal from "@/components/admin/cafes/CoffeeFormModal";
 import DeleteCoffeeModal from "@/components/admin/cafes/DeleteCoffeeModal";
 
-
 import { coffeeCategories } from "@/lib/admin/cafes/constants";
 import { createEmptyCoffee } from "@/lib/admin/cafes/helpers";
 import {
   normalizeCoffees,
   filterCoffees,
   buildCoffeePayload,
-  buildUpdatedCoffee,
   isCoffeeFormValid,
 } from "@/lib/admin/cafes/cafesUtils";
-import { getCafes } from "@/lib/api/admin/cafes";
+
+import {
+  getCafes,
+  createCafe,
+  updateCafe,
+  deleteCafe,
+  toggleCafeAvailability,
+  toggleCafeNew,
+} from "@/lib/api/admin/cafes";
 
 export default function AdminCafesPage() {
   const [selectedNew, setSelectedNew] = useState("Tous");
@@ -30,22 +36,30 @@ export default function AdminCafesPage() {
 
   const [coffees, setCoffees] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [newCoffee, setNewCoffee] = useState(createEmptyCoffee());
   const [coffeeToEdit, setCoffeeToEdit] = useState(null);
   const [editCoffee, setEditCoffee] = useState(createEmptyCoffee());
 
-  useEffect(() => {
-    const loadCoffees = async () => {
-      try {
-        const data = await getCafes();
-        const normalized = normalizeCoffees(data);
-        setCoffees(normalized);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadCoffees = async () => {
+    try {
+      setIsLoading(true);
 
+      const data = await getCafes();
+      const cafesArray = Array.isArray(data) ? data : data.data || [];
+      const normalized = normalizeCoffees(cafesArray);
+
+      setCoffees(normalized);
+    } catch (error) {
+      console.error("Erreur chargement cafés:", error);
+      alert(error.message || "Erreur lors du chargement des cafés");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadCoffees();
   }, []);
 
@@ -59,19 +73,38 @@ export default function AdminCafesPage() {
     );
   }, [coffees, searchTerm, selectedCategory, selectedStatus, selectedNew]);
 
-  const handleDelete = (id) => {
-    const updated = coffees.filter((c) => c.id !== id);
-    setCoffees(updated);
-    setCoffeeToDelete(null);
+  const handleDelete = async (id) => {
+    try {
+      setIsSubmitting(true);
+      await deleteCafe(id);
+      setCoffeeToDelete(null);
+      await loadCoffees();
+    } catch (error) {
+      console.error("Erreur suppression café:", error);
+      alert(error.message || "Erreur lors de la suppression");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleAddCoffee = () => {
+  const handleAddCoffee = async () => {
     if (!isCoffeeFormValid(newCoffee)) return;
 
-    const coffeeToAdd = buildCoffeePayload(newCoffee);
-    setCoffees([coffeeToAdd, ...coffees]);
-    setShowAddForm(false);
-    setNewCoffee(createEmptyCoffee());
+    try {
+      setIsSubmitting(true);
+
+      const payload = buildCoffeePayload(newCoffee);
+      await createCafe(payload);
+
+      setShowAddForm(false);
+      setNewCoffee(createEmptyCoffee());
+      await loadCoffees();
+    } catch (error) {
+      console.error("Erreur ajout café:", error);
+      alert(error.message || "Erreur lors de l'ajout du café");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleOpenEdit = (coffee) => {
@@ -85,51 +118,71 @@ export default function AdminCafesPage() {
       ingredients: coffee.ingredients?.length > 0 ? coffee.ingredients : [""],
       sizes:
         coffee.sizes?.length > 0
-          ? coffee.sizes.map((size) => ({
-              key: size.key || Date.now() + Math.random(),
+          ? coffee.sizes.map((size, index) => ({
+              key: size.key || `size-${index}-${Date.now()}`,
               label: size.label || "",
-              price: size.price || 0,
+              price: Number(size.price) || 0,
             }))
-          : [{ key: Date.now(), label: "M", price: 0 }],
+          : [{ key: `size-${Date.now()}`, label: "M", price: 0 }],
+      available: Boolean(coffee.available),
     });
   };
 
-  const handleUpdateCoffee = () => {
+  const handleUpdateCoffee = async () => {
     if (!coffeeToEdit || !isCoffeeFormValid(editCoffee)) return;
 
-    const updatedCoffees = coffees.map((coffee) =>
-      coffee.id === coffeeToEdit.id
-        ? buildUpdatedCoffee(coffee, editCoffee)
-        : coffee
-    );
+    try {
+      setIsSubmitting(true);
 
-    setCoffees(updatedCoffees);
-    setCoffeeToEdit(null);
-    setEditCoffee(createEmptyCoffee());
+      const payload = buildCoffeePayload(editCoffee);
+
+      await updateCafe(coffeeToEdit.id, {
+        ...payload,
+        available:
+          typeof editCoffee.available === "boolean"
+            ? editCoffee.available
+            : coffeeToEdit.available,
+      });
+
+      setCoffeeToEdit(null);
+      setEditCoffee(createEmptyCoffee());
+      await loadCoffees();
+    } catch (error) {
+      console.error("Erreur modification café:", error);
+      alert(error.message || "Erreur lors de la modification");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleToggleAvailability = (id) => {
-    const updatedCoffees = coffees.map((coffee) =>
-      coffee.id === id ? { ...coffee, available: !coffee.available } : coffee
-    );
-
-    setCoffees(updatedCoffees);
+  const handleToggleAvailability = async (id) => {
+    try {
+      await toggleCafeAvailability(id);
+      await loadCoffees();
+    } catch (error) {
+      console.error("Erreur toggle disponibilité:", error);
+      alert(error.message || "Erreur lors de la mise à jour");
+    }
   };
 
-  const handleToggleNew = (id) => {
-    const updated = coffees.map((coffee) =>
-      coffee.id === id ? { ...coffee, isNew: !coffee.isNew } : coffee
-    );
-
-    setCoffees(updated);
+  const handleToggleNew = async (id) => {
+    try {
+      await toggleCafeNew(id);
+      await loadCoffees();
+    } catch (error) {
+      console.error("Erreur toggle nouveauté:", error);
+      alert(error.message || "Erreur lors de la mise à jour");
+    }
   };
 
   const handleCloseAddModal = () => {
+    if (isSubmitting) return;
     setShowAddForm(false);
     setNewCoffee(createEmptyCoffee());
   };
 
   const handleCloseEditModal = () => {
+    if (isSubmitting) return;
     setCoffeeToEdit(null);
     setEditCoffee(createEmptyCoffee());
   };
@@ -176,7 +229,7 @@ export default function AdminCafesPage() {
           setCoffee={setNewCoffee}
           onClose={handleCloseAddModal}
           onSubmit={handleAddCoffee}
-          submitLabel="Ajouter"
+          submitLabel={isSubmitting ? "Ajout..." : "Ajouter"}
         />
       )}
 
@@ -187,7 +240,7 @@ export default function AdminCafesPage() {
           setCoffee={setEditCoffee}
           onClose={handleCloseEditModal}
           onSubmit={handleUpdateCoffee}
-          submitLabel="Enregistrer"
+          submitLabel={isSubmitting ? "Enregistrement..." : "Enregistrer"}
         />
       )}
     </>

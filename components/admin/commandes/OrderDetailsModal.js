@@ -54,8 +54,8 @@ export default function OrderDetailsModal({
           <div className="rounded-2xl border border-dark/10 bg-white/40 p-4">
             <p className="text-sm text-dark/60">Total</p>
             <p className="mt-1 font-bold text-primary">
-              {Number(order.total || 0).toFixed(2)} DT
-            </p>
+  {Number(order.total || order.totalPrice || 0).toFixed(2)} DT
+</p>
           </div>
 
           {order.customer?.address && (
@@ -96,7 +96,9 @@ export default function OrderDetailsModal({
 
           <div className="mt-4 space-y-4">
             {order.items?.map((item, index) => (
+              
               <div
+              
                 key={`${item.id}-${index}`}
                 className="rounded-2xl border border-dark/10 bg-base p-4"
               >
@@ -109,6 +111,7 @@ export default function OrderDetailsModal({
                     <div className="mt-2 space-y-1 text-sm text-dark/70">
                       <p>Taille : {item.size?.label || "Non précisée"}</p>
                       <p>Contenant : {item.container || "Non précisé"}</p>
+                      <p>Lait : {item.milk || "Non précisé"}</p>
                       <p>Sucre : {item.sugar ?? 0}%</p>
                       <p>
                         Add-ons :{" "}
@@ -121,9 +124,14 @@ export default function OrderDetailsModal({
                     </div>
                   </div>
 
-                  <p className="whitespace-nowrap font-bold text-primary">
-                    {((item.totalPrice || 0) * (item.qty || 0)).toFixed(2)} DT
-                  </p>
+                  <div className="text-right">
+  <p className="text-xs text-dark/60">
+    {Number(item.unitPrice || 0).toFixed(2)} DT × {item.qty}
+  </p>
+  <p className="font-bold text-primary">
+    {Number(item.subtotal || 0).toFixed(2)} DT
+  </p>
+</div>
                 </div>
               </div>
             ))}

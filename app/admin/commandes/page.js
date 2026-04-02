@@ -14,10 +14,6 @@ import {
   filterOrders,
   getCountByStatus,
 } from "@/lib/admin/commandes/ordersUtils";
-import {
-  getOrdersFromStorage,
-  saveOrdersToStorage,
-} from "@/lib/api/admin/orders";
 
 export default function AdminCommandesPage() {
   const [orders, setOrders] = useState([]);
@@ -32,9 +28,28 @@ export default function AdminCommandesPage() {
   useEffect(() => {
     const loadOrders = async () => {
       try {
-        const storedOrders = await getOrdersFromStorage();
-        setOrders(normalizeOrders(storedOrders));
-      } catch {
+        setIsLoading(true);
+
+        const res = await fetch("/api/orders", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.error("Failed to load orders:", data);
+          setOrders([]);
+          return;
+        }
+
+        const safeOrders = Array.isArray(data) ? data : data.orders || [];
+        setOrders(normalizeOrders(safeOrders));
+      } catch (error) {
+        console.error("Load orders error:", error);
         setOrders([]);
       } finally {
         setIsLoading(false);
@@ -44,21 +59,37 @@ export default function AdminCommandesPage() {
     loadOrders();
   }, []);
 
-  const persistOrders = async (updatedOrders) => {
-    setOrders(updatedOrders);
-    await saveOrdersToStorage(updatedOrders);
-  };
-
   const filteredOrders = useMemo(() => {
     return filterOrders(orders, selectedStatus, selectedMode, searchTerm);
   }, [orders, selectedStatus, selectedMode, searchTerm]);
 
   const handleUpdateStatus = async (orderId, newStatus) => {
+  try {
+    const res = await fetch(`/api/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        status: newStatus,
+      }),
+    });
+
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : {};
+
+    if (!res.ok) {
+      console.error("Update status error:", data);
+      alert(data.message || "Erreur lors de la mise à jour du statut");
+      return;
+    }
+
     const updatedOrders = orders.map((order) =>
       order.id === orderId ? { ...order, status: newStatus } : order
     );
 
-    await persistOrders(updatedOrders);
+    setOrders(updatedOrders);
 
     if (selectedOrder?.id === orderId) {
       const updatedSelectedOrder = updatedOrders.find(
@@ -66,19 +97,44 @@ export default function AdminCommandesPage() {
       );
       setSelectedOrder(updatedSelectedOrder || null);
     }
-  };
+  } catch (error) {
+    console.error("Update status error:", error);
+    alert("Server error");
+  }
+};
 
   const handleDeleteOrder = async (orderId) => {
-    const updatedOrders = orders.filter((order) => order.id !== orderId);
+    console.log("delete orderId =", orderId);
+  try {
+    const res = await fetch(`/api/orders/${orderId}`, {
+      method: "DELETE",
+      headers: {
+        Accept: "application/json",
+      },
+    });
 
-    await persistOrders(updatedOrders);
+    const text = await res.text();
+    const data = text ? JSON.parse(text) : {};
+
+    if (!res.ok) {
+      console.error("Delete order error:", data);
+      alert(data.message || "Erreur lors de la suppression");
+      return;
+    }
+
+    const updatedOrders = orders.filter((order) => order.id !== orderId);
+    setOrders(updatedOrders);
 
     if (selectedOrder?.id === orderId) {
       setSelectedOrder(null);
     }
 
     setOrderToDelete(null);
-  };
+  } catch (error) {
+    console.error("Delete order error:", error);
+    alert("Server error");
+  }
+};
 
   const handleGetCountByStatus = (status) => {
     return getCountByStatus(orders, status);

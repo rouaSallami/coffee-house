@@ -15,7 +15,13 @@ import {
   buildAddonPayload,
   buildUpdatedAddon,
 } from "@/lib/admin/addons/addonsUtils";
-import { getAddons } from "@/lib/api/admin/addons";
+import {
+  getAddons,
+  createAddon,
+  updateAddon,
+  deleteAddon,
+  toggleAddonAvailability,
+} from "@/lib/api/admin/addons";
 
 export default function AdminAddonsPage() {
   const [addons, setAddons] = useState([]);
@@ -34,19 +40,24 @@ export default function AdminAddonsPage() {
 
   useEffect(() => {
     const loadAddons = async () => {
-      try {
-        const data = await getAddons();
-        const normalized = Array.isArray(data)
-          ? data.map((addon) => normalizeAddon(addon))
-          : [];
+  try {
+    const data = await getAddons();
+    console.log("ADDONS BACKEND RAW:", data);
 
-        setAddons(normalized);
-      } catch {
-        setAddons([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const normalized = Array.isArray(data)
+      ? data.map((addon) => normalizeAddon(addon))
+      : [];
+
+    console.log("ADDONS NORMALIZED:", normalized);
+
+    setAddons(normalized);
+  } catch (error) {
+    console.error("LOAD ADDONS ERROR:", error);
+    setAddons([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
     loadAddons();
   }, []);
@@ -55,20 +66,33 @@ export default function AdminAddonsPage() {
     return filterAddons(addons, searchTerm, selectedStatus);
   }, [addons, searchTerm, selectedStatus]);
 
-  const handleDelete = (id) => {
-    const updated = addons.filter((addon) => addon.id !== id);
-    setAddons(updated);
+  const handleDelete = async (id) => {
+  try {
+    await deleteAddon(id);
+    setAddons((prev) => prev.filter((addon) => addon.id !== id));
+  } catch (error) {
+    console.error("Erreur suppression addon:", error);
+
+    setAddons((prev) => prev.filter((addon) => addon.id !== id));
+  } finally {
     setAddonToDelete(null);
-  };
+  }
+};
 
-  const handleAddAddon = () => {
-    if (!isAddonFormValid(newAddon)) return;
+  const handleAddAddon = async () => {
+  if (!isAddonFormValid(newAddon)) return;
 
-    const addonToAdd = buildAddonPayload(newAddon);
-    setAddons((prev) => [addonToAdd, ...prev]);
+  try {
+    const payload = buildAddonPayload(newAddon);
+    const createdAddon = await createAddon(payload);
+
+    setAddons((prev) => [normalizeAddon(createdAddon), ...prev]);
     setShowAddForm(false);
     setNewAddon(createEmptyAddon());
-  };
+  } catch (error) {
+    console.error("Erreur ajout addon:", error);
+  }
+};
 
   const handleOpenEdit = (addon) => {
     setAddonToEdit(addon);
@@ -79,29 +103,44 @@ export default function AdminAddonsPage() {
     });
   };
 
-  const handleUpdateAddon = () => {
-    if (!addonToEdit || !isAddonFormValid(editAddon)) return;
+  const handleUpdateAddon = async () => {
+  if (!addonToEdit || !isAddonFormValid(editAddon)) return;
 
-    const updatedAddons = addons.map((addon) =>
-      addon.id === addonToEdit.id
-        ? buildUpdatedAddon(addon, editAddon)
-        : addon
+  try {
+    const payload = {
+      name: editAddon.name.trim(),
+      price: Number(editAddon.price) || 0,
+      image: editAddon.image.trim(),
+    };
+
+    const updatedAddon = await updateAddon(addonToEdit.id, payload);
+
+    setAddons((prev) =>
+      prev.map((addon) =>
+        addon.id === addonToEdit.id ? normalizeAddon(updatedAddon) : addon
+      )
     );
 
-    setAddons(updatedAddons);
     setAddonToEdit(null);
     setEditAddon(createEmptyAddon());
-  };
+  } catch (error) {
+    console.error("Erreur modification addon:", error);
+  }
+};
 
-  const handleToggleAvailability = (id) => {
-    const updatedAddons = addons.map((addon) =>
-      addon.id === id
-        ? { ...addon, available: !addon.available }
-        : addon
+ const handleToggleAvailability = async (id) => {
+  try {
+    const updatedAddon = await toggleAddonAvailability(id);
+
+    setAddons((prev) =>
+      prev.map((addon) =>
+        addon.id === id ? normalizeAddon(updatedAddon) : addon
+      )
     );
-
-    setAddons(updatedAddons);
-  };
+  } catch (error) {
+    console.error("Erreur toggle disponibilité:", error);
+  }
+};
 
   const handleCloseAddModal = () => {
     setShowAddForm(false);

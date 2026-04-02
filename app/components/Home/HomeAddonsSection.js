@@ -12,11 +12,25 @@ export default function HomeAddonsSection() {
   useEffect(() => {
     const fetchAddons = async () => {
       try {
-        const res = await fetch("/api/addons");
+        const res = await fetch("/backend/addons", {
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
         if (!res.ok) throw new Error("Failed to fetch addons");
 
         const data = await res.json();
-        setAddons(data);
+
+        const normalized = (Array.isArray(data) ? data : []).map((addon) => ({
+          ...addon,
+          available: Boolean(addon.available),
+          image: addon.image
+            ? `http://127.0.0.1:8000${addon.image}`
+            : "/images/placeholder-addon.png",
+        }));
+
+        setAddons(normalized);
       } catch (e) {
         setError("Erreur lors du chargement des extras.");
         console.error(e);
@@ -39,9 +53,7 @@ export default function HomeAddonsSection() {
   };
 
   return (
-    <section className="relative overflow-hidden py-20 bg-secondary text-dark">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(0,0,0,0.05),_transparent_45%)]" />
-
+    <section className="py-16">
       <div className="relative max-w-6xl mx-auto px-6">
         <div className="text-center mb-12">
           <p className="text-dark/70 uppercase tracking-[0.2em] text-xs sm:text-sm font-medium mb-3">
@@ -67,6 +79,7 @@ export default function HomeAddonsSection() {
             <button
               onClick={scrollLeft}
               className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-dark/10 px-3 py-2 backdrop-blur hover:bg-dark/20"
+              aria-label="Scroll left"
             >
               ←
             </button>
@@ -88,6 +101,7 @@ export default function HomeAddonsSection() {
             <button
               onClick={scrollRight}
               className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-dark/10 px-3 py-2 backdrop-blur hover:bg-dark/20"
+              aria-label="Scroll right"
             >
               →
             </button>

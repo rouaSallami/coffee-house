@@ -9,14 +9,15 @@ import { Sparkles } from "lucide-react";
 export default function CheckoutPage() {
   const [mode, setMode] = useState(null);
   const [cart, setCart] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const storedCart = getUserData("cart", []);
-    setCart(storedCart);
+    setCart(Array.isArray(storedCart) ? storedCart : []);
   }, []);
 
   const total = cart.reduce(
-    (sum, item) => sum + item.totalPrice * item.qty,
+    (sum, item) => sum + Number(item.totalPrice || 0) * Number(item.qty || 1),
     0
   );
 
@@ -48,14 +49,33 @@ export default function CheckoutPage() {
     return Yup.object({});
   };
 
+  const buildOrderNotes = (values) => {
+    const notes = [];
+
+    if (mode) notes.push(`Mode: ${mode}`);
+    if (mode === "livraison" && values.address) {
+      notes.push(`Adresse: ${values.address}`);
+    }
+    if (mode === "livraison" && values.instructions) {
+      notes.push(`Instructions: ${values.instructions}`);
+    }
+    if (mode === "emporter" && values.pickupTime) {
+      notes.push(`Heure de retrait: ${values.pickupTime}`);
+    }
+    if (mode === "surplace" && values.note) {
+      notes.push(`Note: ${values.note}`);
+    }
+
+    return notes.join(" | ");
+  };
+
   return (
-    <div className="relative min-h-screen pt-20 overflow-hidden bg-secondary text-dark">
-      {/* Background glow */}
+    <div className="relative min-h-screen overflow-hidden bg-secondary pt-20 text-dark">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_45%)]" />
       <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary to-secondary/80" />
 
-      <div className="relative max-w-6xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
+      <div className="relative mx-auto max-w-6xl px-6 py-16">
+        <div className="mb-12 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-dark/10 bg-white/45 px-4 py-2 shadow-sm backdrop-blur-sm">
             <Sparkles size={15} className="text-primary" />
             <p className="text-[12px] font-semibold uppercase tracking-[0.22em] text-dark/70">
@@ -63,60 +83,62 @@ export default function CheckoutPage() {
             </p>
           </div>
 
-          <h1 className="text-4xl font-bold text-dark font-heading mt-3">
+          <h1 className="mt-3 font-heading text-4xl font-bold text-dark">
             Checkout
           </h1>
 
-          <p className="text-dark/75 mt-4 max-w-2xl mx-auto leading-7">
+          <p className="mx-auto mt-4 max-w-2xl leading-7 text-dark/75">
             Choisissez votre mode de réception et confirmez votre commande.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-10">
-          {/* Left side */}
+        <div className="grid gap-10 lg:grid-cols-2">
           <div>
-            <div className="grid md:grid-cols-3 gap-6 mb-12">
+            <div className="mb-12 grid gap-6 md:grid-cols-3">
               <button
+                type="button"
                 onClick={() => setMode("livraison")}
-                className={`rounded-3xl p-8 border transition shadow-lg backdrop-blur-md ${
+                className={`rounded-3xl border p-8 shadow-lg transition backdrop-blur-md ${
                   mode === "livraison"
                     ? "border-primary/20 bg-primary text-white"
                     : "border-dark/10 bg-white/30 text-dark hover:bg-white/40"
                 }`}
               >
-                <div className="text-4xl mb-3">🚚</div>
+                <div className="mb-3 text-4xl">🚚</div>
                 <h3 className="text-lg font-bold">Livraison</h3>
-                <p className="text-sm mt-2 opacity-80">
+                <p className="mt-2 text-sm opacity-80">
                   Nous livrons à votre adresse
                 </p>
               </button>
 
               <button
+                type="button"
                 onClick={() => setMode("emporter")}
-                className={`rounded-3xl p-8 border transition shadow-lg backdrop-blur-md ${
+                className={`rounded-3xl border p-8 shadow-lg transition backdrop-blur-md ${
                   mode === "emporter"
                     ? "border-primary/20 bg-primary text-white"
                     : "border-dark/10 bg-white/30 text-dark hover:bg-white/40"
                 }`}
               >
-                <div className="text-4xl mb-3">🥡</div>
+                <div className="mb-3 text-4xl">🥡</div>
                 <h3 className="text-lg font-bold">À emporter</h3>
-                <p className="text-sm mt-2 opacity-80">
+                <p className="mt-2 text-sm opacity-80">
                   Venez récupérer votre commande
                 </p>
               </button>
 
               <button
+                type="button"
                 onClick={() => setMode("surplace")}
-                className={`rounded-3xl p-8 border transition shadow-lg backdrop-blur-md ${
+                className={`rounded-3xl border p-8 shadow-lg transition backdrop-blur-md ${
                   mode === "surplace"
                     ? "border-primary/20 bg-primary text-white"
                     : "border-dark/10 bg-white/30 text-dark hover:bg-white/40"
                 }`}
               >
-                <div className="text-4xl mb-3">☕</div>
+                <div className="mb-3 text-4xl">☕</div>
                 <h3 className="text-lg font-bold">Sur place</h3>
-                <p className="text-sm mt-2 opacity-80">
+                <p className="mt-2 text-sm opacity-80">
                   Consommer dans le café
                 </p>
               </button>
@@ -124,6 +146,7 @@ export default function CheckoutPage() {
 
             {mode && (
               <Formik
+                enableReinitialize
                 initialValues={{
                   name: "",
                   phone: "",
@@ -133,65 +156,106 @@ export default function CheckoutPage() {
                   note: "",
                 }}
                 validationSchema={getValidationSchema()}
-                onSubmit={(values) => {
-                  const order = {
-                    id: Date.now(),
-                    mode,
-                    customer: values,
-                    items: cart,
-                    total,
-                    status: "confirmed",
-                    createdAt: new Date().toISOString(),
-                  };
+                onSubmit={async (values) => {
+                  if (cart.length === 0) {
+                    alert("Votre panier est vide");
+                    return;
+                  }
 
-                  const existingOrders = JSON.parse(localStorage.getItem("orders")) || [];
-localStorage.setItem("orders", JSON.stringify([order, ...existingOrders]));
+                  try {
+                    setSubmitting(true);
 
-localStorage.setItem("lastOrder", JSON.stringify(order));
-window.dispatchEvent(new Event("orderUpdated"));
+                    const user = getUserData("user", null);
 
-const currentPoints =
-  Number(localStorage.getItem("points")) || 0;
-const newPoints = currentPoints + 20;
-localStorage.setItem("points", newPoints);
+                    const payload = {
+  user_id: user?.id || null,
+  customer_name: values.name,
+  customer_phone: values.phone || "",
+  mode,
+  notes: buildOrderNotes(values),
+  items: cart.map((item) => ({
+  coffee_id: item.coffeeId,
+  size_name: item.size?.label || "Standard",
+  unit_price: Number(item.totalPrice || 0),
+  quantity: Number(item.qty || 1),
+  sugar: item.sugar ?? 0,
+  container: item.container || null,
+  milk: item.milk || null,
+  note: item.note || null,
 
-setUserData("cart", []);
-window.dispatchEvent(new Event("cartUpdated"));
+  addons: item.addons || [],
+})),
+                    };
 
-window.location.href = "/suivi-commande";
+                    const res = await fetch("/api/orders", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                      },
+                      body: JSON.stringify(payload),
+                    });
+
+                    const data = await res.json();
+
+if (!res.ok) {
+  console.error("ORDER ERROR:", data);
+  alert(data.error || data.message || "Erreur lors de la commande");
+  return;
+}
+
+                    localStorage.setItem("lastOrder", JSON.stringify(data.order));
+
+                    const currentPoints =
+                      Number(localStorage.getItem("points")) || 0;
+                    localStorage.setItem(
+                      "points",
+                      String(currentPoints + 20)
+                    );
+
+                    setUserData("cart", []);
+                    window.dispatchEvent(new Event("cartUpdated"));
+
+                    window.location.href = "/suivi-commande";
+                  } catch (error) {
+                    console.error(error);
+                    alert("Server error");
+                  } finally {
+                    setSubmitting(false);
+                  }
                 }}
               >
-                <Form className="rounded-3xl p-8 border border-dark/10 bg-white/30 backdrop-blur-md shadow-xl space-y-5">
+                <Form className="space-y-5 rounded-3xl border border-dark/10 bg-white/30 p-8 shadow-xl backdrop-blur-md">
                   <div>
-                    <label className="block text-accent font-semibold mb-2">
+                    <label className="mb-2 block font-semibold text-accent">
                       Nom
                     </label>
                     <Field
                       name="name"
-                      className="w-full rounded-xl border border-dark/10 bg-white/45 text-dark px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-dark/45"
+                      className="w-full rounded-xl border border-dark/10 bg-white/45 px-4 py-3 text-dark outline-none placeholder:text-dark/45 focus:ring-2 focus:ring-primary/20"
                       placeholder="Votre nom"
                     />
                     <ErrorMessage
                       name="name"
                       component="p"
-                      className="text-red-500 text-sm mt-1"
+                      className="mt-1 text-sm text-red-500"
                     />
                   </div>
 
                   {(mode === "livraison" || mode === "emporter") && (
                     <div>
-                      <label className="block text-accent font-semibold mb-2">
+                      <label className="mb-2 block font-semibold text-accent">
                         Téléphone
                       </label>
                       <Field
                         name="phone"
-                        className="w-full rounded-xl border border-dark/10 bg-white/45 text-dark px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-dark/45"
+                        className="w-full rounded-xl border border-dark/10 bg-white/45 px-4 py-3 text-dark outline-none placeholder:text-dark/45 focus:ring-2 focus:ring-primary/20"
                         placeholder="Votre téléphone"
                       />
                       <ErrorMessage
                         name="phone"
                         component="p"
-                        className="text-red-500 text-sm mt-1"
+                        className="mt-1 text-sm text-red-500"
                       />
                     </div>
                   )}
@@ -199,29 +263,29 @@ window.location.href = "/suivi-commande";
                   {mode === "livraison" && (
                     <>
                       <div>
-                        <label className="block text-accent font-semibold mb-2">
+                        <label className="mb-2 block font-semibold text-accent">
                           Adresse
                         </label>
                         <Field
                           name="address"
-                          className="w-full rounded-xl border border-dark/10 bg-white/45 text-dark px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-dark/45"
+                          className="w-full rounded-xl border border-dark/10 bg-white/45 px-4 py-3 text-dark outline-none placeholder:text-dark/45 focus:ring-2 focus:ring-primary/20"
                           placeholder="Votre adresse"
                         />
                         <ErrorMessage
                           name="address"
                           component="p"
-                          className="text-red-500 text-sm mt-1"
+                          className="mt-1 text-sm text-red-500"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-accent font-semibold mb-2">
+                        <label className="mb-2 block font-semibold text-accent">
                           Instructions
                         </label>
                         <Field
                           as="textarea"
                           name="instructions"
-                          className="w-full h-28 rounded-xl border border-dark/10 bg-white/45 text-dark px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-dark/45 resize-none"
+                          className="h-28 w-full resize-none rounded-xl border border-dark/10 bg-white/45 px-4 py-3 text-dark outline-none placeholder:text-dark/45 focus:ring-2 focus:ring-primary/20"
                           placeholder="Ex: sonner 2 fois..."
                         />
                       </div>
@@ -230,37 +294,38 @@ window.location.href = "/suivi-commande";
 
                   {mode === "emporter" && (
                     <div>
-                      <label className="block text-accent font-semibold mb-2">
+                      <label className="mb-2 block font-semibold text-accent">
                         Heure de retrait
                       </label>
                       <Field
                         name="pickupTime"
                         type="time"
-                        className="w-full rounded-xl border border-dark/10 bg-white/45 text-dark px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full rounded-xl border border-dark/10 bg-white/45 px-4 py-3 text-dark outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                   )}
 
                   {mode === "surplace" && (
                     <div>
-                      <label className="block text-accent font-semibold mb-2">
+                      <label className="mb-2 block font-semibold text-accent">
                         Note
                       </label>
                       <Field
                         as="textarea"
                         name="note"
-                        className="w-full h-28 rounded-xl border border-dark/10 bg-white/45 text-dark px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-dark/45 resize-none"
+                        className="h-28 w-full resize-none rounded-xl border border-dark/10 bg-white/45 px-4 py-3 text-dark outline-none placeholder:text-dark/45 focus:ring-2 focus:ring-primary/20"
                         placeholder="Votre remarque..."
                       />
                     </div>
                   )}
 
-                  <div className="pt-4 flex justify-end">
+                  <div className="flex justify-end pt-4">
                     <button
                       type="submit"
-                      className="rounded-2xl bg-primary text-white px-6 py-3 font-semibold transition hover:opacity-95 shadow-md"
+                      disabled={submitting || cart.length === 0}
+                      className="rounded-2xl bg-primary px-6 py-3 font-semibold text-white shadow-md transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Confirmer la commande
+                      {submitting ? "Confirmation..." : "Confirmer la commande"}
                     </button>
                   </div>
                 </Form>
@@ -268,10 +333,9 @@ window.location.href = "/suivi-commande";
             )}
           </div>
 
-          {/* Right side */}
           <div>
-            <div className="rounded-3xl p-8 border border-dark/10 bg-white/30 backdrop-blur-md shadow-xl">
-              <h2 className="text-2xl font-bold text-accent mb-6">
+            <div className="rounded-3xl border border-dark/10 bg-white/30 p-8 shadow-xl backdrop-blur-md">
+              <h2 className="mb-6 text-2xl font-bold text-accent">
                 Résumé de la commande
               </h2>
 
@@ -285,13 +349,13 @@ window.location.href = "/suivi-commande";
                         key={item.id}
                         className="border-b border-dark/10 pb-4"
                       >
-                        <div className="flex justify-between items-start gap-4">
+                        <div className="flex items-start justify-between gap-4">
                           <div>
                             <h3 className="font-semibold text-accent">
                               {item.coffeeName}
                             </h3>
 
-                            <div className="text-sm text-dark/70 mt-1 space-y-1">
+                            <div className="mt-1 space-y-1 text-sm text-dark/70">
                               <p>Taille: {item.size?.label}</p>
                               <p>Contenant: {item.container}</p>
                               <p>Sucre: {item.sugar}%</p>
@@ -307,14 +371,18 @@ window.location.href = "/suivi-commande";
                           </div>
 
                           <p className="font-bold text-accent">
-                            {(item.totalPrice * item.qty).toFixed(2)} DT
+                            {(
+                              Number(item.totalPrice || 0) *
+                              Number(item.qty || 1)
+                            ).toFixed(2)}{" "}
+                            DT
                           </p>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="pt-6 mt-6 border-t border-dark/10 flex justify-between text-lg font-bold text-accent">
+                  <div className="mt-6 flex justify-between border-t border-dark/10 pt-6 text-lg font-bold text-accent">
                     <span>Total</span>
                     <span>{total.toFixed(2)} DT</span>
                   </div>

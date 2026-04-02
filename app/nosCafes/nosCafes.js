@@ -6,6 +6,7 @@ import NosCafesCard from "../components/coffees/NosCafesCard";
 import CoffeeDetailsModal from "../components/coffees/CoffeeDetailsModal";
 import { getUserData, setUserData } from "../lib/storage";
 import { Coffee, Search } from "lucide-react";
+import { API_BASE_URL } from "../../lib/api/config";
 
 const CATEGORIES = [
   "Tous",
@@ -34,7 +35,7 @@ export default function NosCafesPage() {
   useEffect(() => {
     const fetchCoffees = async () => {
       try {
-        const res = await fetch("/api/coffees");
+        const res = await fetch(`${API_BASE_URL}/coffees`);
 
         if (!res.ok) {
           throw new Error("Erreur lors du chargement des cafés");
@@ -131,7 +132,7 @@ export default function NosCafesPage() {
     try {
       setLoadingDetails(true);
 
-      const res = await fetch(`/api/coffees/${id}`);
+      const res = await fetch(`${API_BASE_URL}/coffees/${id}`);
 
       if (!res.ok) {
         const errorBody = await res.text();

@@ -20,9 +20,11 @@ import {
   buildUpdatedUser,
 } from "@/lib/admin/utilisateurs/usersUtils";
 import {
-  getUsersFromStorage,
-  saveCurrentUserToStorage,
-  removeCurrentUserFromStorage,
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  toggleUserActive,
 } from "@/lib/api/admin/users";
 
 export default function AdminUtilisateursPage() {
@@ -41,37 +43,39 @@ export default function AdminUtilisateursPage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const storedUsers = await getUsersFromStorage();
+  const loadUsers = async () => {
+    try {
+      const data = await getUsers();
+      setUsers(Array.isArray(data) ? data.map((user) => normalizeStoredUser(user)) : []);
+    } catch (error) {
+      console.error("Erreur chargement users:", error);
+      setUsers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        if (storedUsers.length > 0) {
-          setUsers(storedUsers.map((user) => normalizeStoredUser(user)));
-        } else {
-          setUsers([]);
-        }
-      } catch {
-        setUsers([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadUsers();
-  }, []);
+  loadUsers();
+}, []);
 
   const filteredUsers = useMemo(() => {
     return filterUsers(users, search);
   }, [users, search]);
 
-  const handleAddUser = () => {
-    if (!isUserFormValid(newUser)) return;
+  const handleAddUser = async () => {
+  if (!isUserFormValid(newUser)) return;
 
-    const userToAdd = buildUserPayload(newUser);
-    setUsers([userToAdd, ...users]);
+  try {
+    const payload = buildUserPayload(newUser);
+    const createdUser = await createUser(payload);
+
+    setUsers((prev) => [normalizeStoredUser(createdUser), ...prev]);
     setShowAddForm(false);
     setNewUser(createEmptyUser());
-  };
+  } catch (error) {
+    console.error("Erreur ajout user:", error);
+  }
+};
 
   const handleOpenEdit = (user) => {
     setUserToEdit(user);
@@ -83,73 +87,70 @@ export default function AdminUtilisateursPage() {
   };
 
   const handleUpdateUser = async () => {
-    if (!userToEdit || !isUserFormValid(editUser)) return;
+  if (!userToEdit || !isUserFormValid(editUser)) return;
+
+  try {
+    const payload = {
+      name: editUser.name.trim(),
+      email: editUser.email.trim(),
+      phone: editUser.phone.trim(),
+    };
+
+    const updatedUserFromApi = await updateUser(userToEdit.id, payload);
+    const normalizedUpdatedUser = normalizeStoredUser(updatedUserFromApi);
 
     const updatedUsers = users.map((user) =>
-      user.id === userToEdit.id
-        ? buildUpdatedUser(user, editUser)
-        : user
+      user.id === userToEdit.id ? normalizedUpdatedUser : user
     );
 
     setUsers(updatedUsers);
 
-    try {
-      const storedUsers = await getUsersFromStorage();
-      const storedUser = storedUsers[0];
-
-      if (storedUser && storedUser.email === userToEdit.email) {
-        await saveCurrentUserToStorage({
-          ...storedUser,
-          name: editUser.name.trim(),
-          email: editUser.email.trim(),
-          phone: editUser.phone.trim(),
-        });
-      }
-    } catch {}
-
     if (selectedUser && selectedUser.id === userToEdit.id) {
-      const updatedSelected = updatedUsers.find(
-        (user) => user.id === userToEdit.id
-      );
-      setSelectedUser(updatedSelected || null);
+      setSelectedUser(normalizedUpdatedUser);
     }
 
     setUserToEdit(null);
     setEditUser(createEmptyUser());
-  };
+  } catch (error) {
+    console.error("Erreur modification user:", error);
+  }
+};
 
   const handleDeleteUser = async (userId) => {
-    const targetUser = users.find((user) => user.id === userId);
+  try {
+    await deleteUser(userId);
+
     const updatedUsers = users.filter((user) => user.id !== userId);
     setUsers(updatedUsers);
-
-    try {
-      const storedUsers = await getUsersFromStorage();
-      const storedUser = storedUsers[0];
-
-      if (storedUser && targetUser && storedUser.email === targetUser.email) {
-        await removeCurrentUserFromStorage();
-      }
-    } catch {}
 
     if (selectedUser && selectedUser.id === userId) {
       setSelectedUser(null);
     }
-
+  } catch (error) {
+    console.error("Erreur suppression user:", error);
+  } finally {
     setUserToDelete(null);
-  };
+  }
+};
 
-  const handleToggleStatus = (userId) => {
+  const handleToggleStatus = async (userId) => {
+  try {
+    const updatedUserFromApi = await toggleUserActive(userId);
+    const normalizedUpdatedUser = normalizeStoredUser(updatedUserFromApi);
+
     const updatedUsers = users.map((user) =>
-      user.id === userId ? { ...user, active: !user.active } : user
+      user.id === userId ? normalizedUpdatedUser : user
     );
+
     setUsers(updatedUsers);
 
     if (selectedUser && selectedUser.id === userId) {
-      const updatedSelected = updatedUsers.find((user) => user.id === userId);
-      setSelectedUser(updatedSelected || null);
+      setSelectedUser(normalizedUpdatedUser);
     }
-  };
+  } catch (error) {
+    console.error("Erreur toggle status user:", error);
+  }
+};
 
   const handleCloseAddModal = () => {
     setShowAddForm(false);
