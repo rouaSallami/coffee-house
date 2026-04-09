@@ -8,6 +8,7 @@ import OrdersStatusFilters from "@/components/admin/commandes/OrdersStatusFilter
 import OrdersList from "@/components/admin/commandes/OrdersList";
 import OrderDetailsModal from "@/components/admin/commandes/OrderDetailsModal";
 import DeleteOrderModal from "@/components/admin/commandes/DeleteOrderModal";
+import toast from "react-hot-toast";
 
 import {
   normalizeOrders,
@@ -30,13 +31,16 @@ export default function AdminCommandesPage() {
       try {
         setIsLoading(true);
 
-        const res = await fetch("/api/orders", {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-          cache: "no-store",
-        });
+        const token = sessionStorage.getItem("token");
+
+const res = await fetch("/backend/admin/orders", {
+  method: "GET",
+  headers: {
+    Accept: "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  cache: "no-store",
+});
 
         const data = await res.json();
 
@@ -63,30 +67,39 @@ export default function AdminCommandesPage() {
     return filterOrders(orders, selectedStatus, selectedMode, searchTerm);
   }, [orders, selectedStatus, selectedMode, searchTerm]);
 
-  const handleUpdateStatus = async (orderId, newStatus) => {
+ const handleUpdateStatus = async (orderId, newStatus) => {
   try {
-    const res = await fetch(`/api/orders/${orderId}/status`, {
+    const token = sessionStorage.getItem("token");
+
+    const res = await fetch(`/backend/admin/orders/${orderId}/status`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        status: newStatus,
-      }),
+      body: JSON.stringify({ status: newStatus }),
     });
 
     const text = await res.text();
-    const data = text ? JSON.parse(text) : {};
+
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = { message: text || "Invalid server response" };
+    }
 
     if (!res.ok) {
       console.error("Update status error:", data);
-      alert(data.message || "Erreur lors de la mise à jour du statut");
+      toast.error(data.message || "Erreur lors de la mise à jour du statut");
       return;
     }
 
     const updatedOrders = orders.map((order) =>
-      order.id === orderId ? { ...order, status: newStatus } : order
+      order.id === orderId
+        ? { ...order, status: data?.order?.status || newStatus }
+        : order
     );
 
     setOrders(updatedOrders);
@@ -97,41 +110,68 @@ export default function AdminCommandesPage() {
       );
       setSelectedOrder(updatedSelectedOrder || null);
     }
+
+    toast.success("Statut mis à jour avec succès");
   } catch (error) {
     console.error("Update status error:", error);
-    alert("Server error");
+    toast.error("Server error");
   }
 };
 
-  const handleDeleteOrder = async (orderId) => {
-    console.log("delete orderId =", orderId);
+ const handleDeleteOrder = async (orderId) => {
   try {
-    const res = await fetch(`/api/orders/${orderId}`, {
+    const token = sessionStorage.getItem("token");
+
+    const res = await fetch(`/backend/admin/orders/${orderId}`, {
       method: "DELETE",
       headers: {
         Accept: "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
 
     const text = await res.text();
-    const data = text ? JSON.parse(text) : {};
+
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (e) {
+      console.error("Invalid JSON:", text);
+    }
 
     if (!res.ok) {
       console.error("Delete order error:", data);
-      alert(data.message || "Erreur lors de la suppression");
+
+      if (res.status === 404) {
+        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder(null);
+        }
+        setOrderToDelete(null);
+
+        toast("Commande déjà supprimée", {
+          icon: "⚠️",
+        });
+        return;
+      }
+
+      alert(data.message || text || "Erreur lors de la suppression");
       return;
     }
 
-    const updatedOrders = orders.filter((order) => order.id !== orderId);
-    setOrders(updatedOrders);
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
 
     if (selectedOrder?.id === orderId) {
       setSelectedOrder(null);
     }
 
     setOrderToDelete(null);
+
+    toast("🗑️ Commande supprimée avec succès", {
+  icon: "✅",
+});
   } catch (error) {
-    console.error("Delete order error:", error);
+    console.error("Delete error:", error);
     alert("Server error");
   }
 };

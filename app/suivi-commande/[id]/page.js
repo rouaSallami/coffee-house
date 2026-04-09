@@ -1,38 +1,52 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
+import toast from "react-hot-toast";
+import echo from "@/lib/echo";
 
 export default function SuiviCommande() {
+  const params = useParams();
+  const orderId = params?.id;
+
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const hasBoundListener = useRef(false);
 
   const loadOrder = async () => {
     try {
-      const storedOrder = JSON.parse(localStorage.getItem("lastOrder"));
-      const orderId = storedOrder?.id;
+      const token = sessionStorage.getItem("token");
 
-      if (!orderId) {
+      if (!token || !orderId) {
         setOrder(null);
         setLoading(false);
         return;
       }
 
-      const res = await fetch(`/api/orders/${orderId}`, {
+      const res = await fetch(`/backend/orders/${orderId}`, {
         method: "GET",
         headers: {
           Accept: "application/json",
+          Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
       });
 
       const text = await res.text();
-      const data = text ? JSON.parse(text) : null;
+      console.log("ORDER STATUS CODE =", res.status);
+      console.log("ORDER RAW RESPONSE =", text);
+
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = null;
+      }
 
       if (!res.ok) {
         console.error("Load order error:", data);
         setOrder(null);
-        setLoading(false);
         return;
       }
 
@@ -67,15 +81,44 @@ export default function SuiviCommande() {
 
   useEffect(() => {
     loadOrder();
+  }, [orderId]);
 
-    const interval = setInterval(() => {
-      loadOrder();
-    }, 5000);
+  useEffect(() => {
+    if (!echo) return;
+    if (!order?.id) return;
+    if (hasBoundListener.current) return;
+
+    hasBoundListener.current = true;
+
+    const channel = echo.channel("orders");
+
+    channel.listen("OrderStatusUpdated", (e) => {
+      const eventId = String(e.order?.id);
+      const eventStatus = e.order?.status;
+
+      if (String(order?.id) !== eventId) return;
+
+      setOrder((prev) => {
+        if (!prev) return prev;
+        if (String(prev.id) !== eventId) return prev;
+
+        return {
+          ...prev,
+          status: eventStatus,
+        };
+      });
+
+      toast(`☕ Statut changé: ${eventStatus}`, {
+        icon: "🔔",
+      });
+    });
 
     return () => {
-      clearInterval(interval);
+      channel.stopListening("OrderStatusUpdated");
+      echo.leaveChannel("orders");
+      hasBoundListener.current = false;
     };
-  }, []);
+  }, [order?.id]);
 
   const steps = useMemo(() => {
     if (!order) return [];
@@ -130,18 +173,18 @@ export default function SuiviCommande() {
         <div className="relative mx-auto max-w-3xl px-6 py-20">
           <div className="rounded-3xl border border-primary/10 bg-white/70 p-10 text-center shadow-lg backdrop-blur-sm">
             <h1 className="mb-4 font-heading text-3xl font-bold text-dark">
-              Aucune commande en cours
+              Commande introuvable
             </h1>
 
             <p className="mb-8 text-dark/70">
-              Vous n’avez pas de commande active pour le moment.
+              Cette commande n’existe pas ou vous n’avez pas accès à cette page.
             </p>
 
             <Link
-              href="/nosCafes"
+              href="/mes-commandes"
               className="inline-block rounded-2xl bg-primary px-6 py-3 font-semibold text-white shadow-md transition hover:opacity-95"
             >
-              Commander un café
+              Retour à mes commandes
             </Link>
           </div>
         </div>
@@ -202,6 +245,15 @@ export default function SuiviCommande() {
       <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary to-secondary/80" />
 
       <div className="relative mx-auto max-w-4xl px-6 py-8 md:py-10">
+        <div className="mb-6">
+          <Link
+            href="/mes-commandes"
+            className="inline-flex items-center rounded-2xl border border-dark/15 bg-white/40 px-4 py-2 font-semibold text-dark2 transition hover:bg-white/55"
+          >
+            ← Retour à mes commandes
+          </Link>
+        </div>
+
         <div className="mb-8 text-center md:mb-10">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-dark/70">
             Votre commande

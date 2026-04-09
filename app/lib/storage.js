@@ -1,5 +1,5 @@
 export function getCurrentUser() {
-  const user = localStorage.getItem("user");
+  const user = sessionStorage.getItem("user");
   return user ? JSON.parse(user) : null;
 }
 
@@ -15,12 +15,12 @@ export function getUserStorageKey(baseKey) {
 
 export function getUserData(baseKey, fallback = []) {
   const key = getUserStorageKey(baseKey);
-  const data = localStorage.getItem(key);
+  const data = sessionStorage.getItem(key);
 
   return data ? JSON.parse(data) : fallback;
 }
 
 export function setUserData(baseKey, value) {
   const key = getUserStorageKey(baseKey);
-  localStorage.setItem(key, JSON.stringify(value));
+  sessionStorage.setItem(key, JSON.stringify(value));
 }

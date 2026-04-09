@@ -7,6 +7,7 @@ import CafesFilters from "@/components/admin/cafes/CafesFilters";
 import CoffeesGrid from "@/components/admin/cafes/CoffeesGrid";
 import CoffeeFormModal from "@/components/admin/cafes/CoffeeFormModal";
 import DeleteCoffeeModal from "@/components/admin/cafes/DeleteCoffeeModal";
+import toast from "react-hot-toast";
 
 import { coffeeCategories } from "@/lib/admin/cafes/constants";
 import { createEmptyCoffee } from "@/lib/admin/cafes/helpers";
@@ -74,18 +75,25 @@ export default function AdminCafesPage() {
   }, [coffees, searchTerm, selectedCategory, selectedStatus, selectedNew]);
 
   const handleDelete = async (id) => {
-    try {
-      setIsSubmitting(true);
-      await deleteCafe(id);
-      setCoffeeToDelete(null);
-      await loadCoffees();
-    } catch (error) {
-      console.error("Erreur suppression café:", error);
-      alert(error.message || "Erreur lors de la suppression");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  try {
+    setIsSubmitting(true);
+
+    await deleteCafe(id);
+
+    setCoffeeToDelete(null);
+    await loadCoffees();
+
+    toast("🗑️ Café supprimé", {
+  icon: "✅",
+});
+  } catch (error) {
+    console.error("Erreur suppression café:", error);
+
+    toast.error(error.message || "Erreur lors de la suppression");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleAddCoffee = async () => {
     if (!isCoffeeFormValid(newCoffee)) return;
@@ -134,15 +142,18 @@ export default function AdminCafesPage() {
     try {
       setIsSubmitting(true);
 
+    
+
       const payload = buildCoffeePayload(editCoffee);
 
-      await updateCafe(coffeeToEdit.id, {
-        ...payload,
-        available:
-          typeof editCoffee.available === "boolean"
-            ? editCoffee.available
-            : coffeeToEdit.available,
-      });
+payload.append(
+  "available",
+  typeof editCoffee.available === "boolean"
+    ? (editCoffee.available ? "1" : "0")
+    : (coffeeToEdit.available ? "1" : "0")
+);
+
+await updateCafe(coffeeToEdit.id, payload);
 
       setCoffeeToEdit(null);
       setEditCoffee(createEmptyCoffee());

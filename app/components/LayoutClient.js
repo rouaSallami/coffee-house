@@ -17,7 +17,7 @@ export default function LayoutClient({ children }) {
 
   useEffect(() => {
     const isAuthenticated =
-      localStorage.getItem("isAuthenticated") === "true";
+      sessionStorage.getItem("isAuthenticated") === "true";
 
     const publicRoutes = ["/login", "/register"];
 

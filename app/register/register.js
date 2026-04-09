@@ -75,20 +75,18 @@ if (!res.ok) {
   throw new Error(data.message || "Erreur lors de l'inscription");
 }
 
-localStorage.setItem("user", JSON.stringify(data.user));
-localStorage.setItem("isAuthenticated", "true");
 
-window.dispatchEvent(new Event("authChanged"));
+
+
 window.dispatchEvent(new Event("cartUpdated"));
 window.dispatchEvent(new Event("favoritesUpdated"));
 
 setTimeout(() => {
   toast.success("Compte créé avec succès 🎉");
+  window.location.href = "/login";
 }, 1000);
 
-setTimeout(() => {
-  window.location.href = "/";
-}, 2000);
+
     } catch (err) {
       setError(err.message || "Une erreur est survenue. Veuillez réessayer.");
       setLoading(false);

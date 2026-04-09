@@ -31,13 +31,13 @@ export default function CheckoutPage() {
       });
     }
 
-    if (mode === "emporter") {
-      return Yup.object({
-        name: Yup.string().required("Le nom est requis"),
-        phone: Yup.string().required("Le téléphone est requis"),
-        pickupTime: Yup.string(),
-      });
-    }
+    if (mode === "surplace") {
+  return Yup.object({
+    name: Yup.string().required("Le nom est requis"),
+    phone: Yup.string().required("Le téléphone est requis"),
+    note: Yup.string(),
+  });
+}
 
     if (mode === "surplace") {
       return Yup.object({
@@ -168,9 +168,9 @@ export default function CheckoutPage() {
                     const user = getUserData("user", null);
 
                     const payload = {
-  user_id: user?.id || null,
+
   customer_name: values.name,
-  customer_phone: values.phone || "",
+  customer_phone: values.phone,
   mode,
   notes: buildOrderNotes(values),
   items: cart.map((item) => ({
@@ -187,14 +187,17 @@ export default function CheckoutPage() {
 })),
                     };
 
-                    const res = await fetch("/api/orders", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                      },
-                      body: JSON.stringify(payload),
-                    });
+                    const token = sessionStorage.getItem("token");
+
+const res = await fetch("/backend/orders", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "Authorization": `Bearer ${token}`, 
+  },
+  body: JSON.stringify(payload),
+});
 
                     const data = await res.json();
 
@@ -204,11 +207,11 @@ if (!res.ok) {
   return;
 }
 
-                    localStorage.setItem("lastOrder", JSON.stringify(data.order));
+                    sessionStorage.setItem("lastOrder", JSON.stringify(data.order));
 
                     const currentPoints =
-                      Number(localStorage.getItem("points")) || 0;
-                    localStorage.setItem(
+                      Number(sessionStorage.getItem("points")) || 0;
+                    sessionStorage.setItem(
                       "points",
                       String(currentPoints + 20)
                     );
@@ -242,8 +245,7 @@ if (!res.ok) {
                     />
                   </div>
 
-                  {(mode === "livraison" || mode === "emporter") && (
-                    <div>
+{(mode === "livraison" || mode === "emporter" || mode === "surplace") && (                    <div>
                       <label className="mb-2 block font-semibold text-accent">
                         Téléphone
                       </label>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
 import {
   LayoutDashboard,
   Coffee,
@@ -49,8 +50,8 @@ export default function AdminLayout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("isAuthenticated");
+    sessionStorage.removeItem("user");
 
     window.dispatchEvent(new Event("authChanged"));
     window.dispatchEvent(new Event("cartUpdated"));
@@ -63,9 +64,9 @@ export default function AdminLayout({ children }) {
 
   useEffect(() => {
     const isAuthenticated =
-      localStorage.getItem("isAuthenticated") === "true";
+      sessionStorage.getItem("isAuthenticated") === "true";
 
-    const user = JSON.parse(localStorage.getItem("user"));
+    const user = JSON.parse(sessionStorage.getItem("user"));
 
     if (!isAuthenticated || user?.role !== "admin") {
       router.push("/login");

@@ -16,6 +16,12 @@ export default function CoffeeDetailsModal({
     ? Math.min(...coffee.sizes.map((s) => s.price))
     : coffee.price;
 
+  const imageSrc = coffee.image
+    ? coffee.image.startsWith("http")
+      ? coffee.image.replace("127.0.0.1", "localhost")
+      : `http://localhost:8000${coffee.image}`
+    : "/images/placeholder-coffee.png";
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
@@ -25,7 +31,6 @@ export default function CoffeeDetailsModal({
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-2xl overflow-hidden rounded-[32px] border border-dark/10 bg-beige shadow-2xl animate-[modalScaleIn_0.22s_ease]"
       >
-        {/* Close */}
         <button
           onClick={onClose}
           className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-dark/10 bg-white/85 text-dark shadow-md transition-all duration-300 hover:scale-105 hover:bg-white"
@@ -34,10 +39,9 @@ export default function CoffeeDetailsModal({
           <X size={20} />
         </button>
 
-        {/* Image */}
         <div className="relative h-64 w-full overflow-hidden md:h-72">
           <Image
-            src={coffee.image}
+            src={imageSrc}
             alt={coffee.name}
             fill
             className="object-cover"
@@ -73,7 +77,6 @@ export default function CoffeeDetailsModal({
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-6 md:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -139,7 +142,6 @@ export default function CoffeeDetailsModal({
             </div>
           )}
 
-          {/* Buttons */}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             {coffee.available ? (
               <Link

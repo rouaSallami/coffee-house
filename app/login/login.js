@@ -32,11 +32,11 @@ export default function LoginPage() {
   setLoading(true);
 
   try {
-    const res = await fetch("/api/auth/login", {
+    const res = await fetch("/backend/login", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "Accept": "application/json",
+    Accept: "application/json",
   },
   body: JSON.stringify({
     email: form.email,
@@ -50,24 +50,21 @@ if (!res.ok) {
   throw new Error(data.message || "Erreur lors de la connexion");
 }
 
-localStorage.setItem("user", JSON.stringify(data.user));
-localStorage.setItem("isAuthenticated", "true");
+sessionStorage.setItem("token", data.token);
+sessionStorage.setItem("user", JSON.stringify(data.user));
+sessionStorage.setItem("isAuthenticated", "true");
 
 window.dispatchEvent(new Event("authChanged"));
 window.dispatchEvent(new Event("cartUpdated"));
 window.dispatchEvent(new Event("favoritesUpdated"));
 
-setTimeout(() => {
-  toast.success(
-    data.user?.role === "admin"
-      ? `Bienvenue ${data.user.name} 👨‍💼`
-      : `Bienvenue ${data.user.name} ☕`
-  );
-}, 1000);
+toast.success(
+  data.user?.role === "admin"
+    ? `Bienvenue ${data.user.name} 👨‍💼`
+    : `Bienvenue ${data.user.name} ☕`
+);
 
-setTimeout(() => {
-  window.location.href = data.user?.role === "admin" ? "/admin" : "/";
-}, 2000);
+window.location.href = data.user?.role === "admin" ? "/admin" : "/";
   } catch (err) {
     setError(err.message || "Une erreur est survenue. Veuillez réessayer.");
 setLoading(false);

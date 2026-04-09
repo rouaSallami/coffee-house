@@ -46,6 +46,12 @@ const toggleFavorite = () => {
     ? Math.min(...coffee.sizes.map((s) => s.price))
     : coffee.price;
 
+    const imageSrc = coffee.image
+  ? coffee.image.startsWith("http")
+    ? coffee.image.replace("127.0.0.1", "localhost")
+    : `http://localhost:8000${coffee.image}`
+  : "/images/placeholder-coffee.png";
+
   return (
     <div
       className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl p-6 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
@@ -58,7 +64,7 @@ const toggleFavorite = () => {
 
       <div className="relative w-full h-48 overflow-hidden rounded-2xl mb-4">
         <Image
-          src={coffee.image}
+          src={imageSrc}
           alt={coffee.name}
           fill
           className="object-cover"

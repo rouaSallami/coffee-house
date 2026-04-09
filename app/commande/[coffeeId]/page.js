@@ -42,9 +42,19 @@ function normalizeSizes(rawSizes = []) {
 function normalizeCoffee(rawCoffee) {
   if (!rawCoffee) return null;
 
+  let image = rawCoffee.image;
+
+  if (!image) {
+    image = "/images/placeholder-coffee.png";
+  } else if (!image.startsWith("http")) {
+    image = `http://localhost:8000${image}`;
+  } else {
+    image = image.replace("127.0.0.1", "localhost");
+  }
+
   return {
     ...rawCoffee,
-    image: rawCoffee.image || "/images/placeholder-coffee.png",
+    image,
     sizes: normalizeSizes(rawCoffee.sizes || []),
     milkOptions:
       rawCoffee.milkOptions && Array.isArray(rawCoffee.milkOptions)
@@ -54,13 +64,28 @@ function normalizeCoffee(rawCoffee) {
 }
 
 function normalizeAddons(rawAddons = []) {
-  return rawAddons.map((addon, index) => ({
-    id: addon.id ?? index + 1,
-    name: addon.name ?? "Extra",
-    image: addon.image || "/images/placeholder-addon.png",
-    price: Number(addon.price ?? 0),
-    available: Boolean(Number(addon.available)),
-  }));
+  return rawAddons.map((addon, index) => {
+    let image = addon.image;
+
+    if (!image) {
+      image = "/images/placeholder-addon.png";
+    } else if (!image.startsWith("http")) {
+      image = `http://localhost:8000${image}`;
+    } else {
+      image = image.replace("127.0.0.1", "localhost");
+    }
+
+    return {
+      id: addon.id ?? index + 1,
+      name: addon.name ?? "Extra",
+      image,
+      price: Number(addon.price ?? 0),
+      available:
+        typeof addon.available === "boolean"
+          ? addon.available
+          : Boolean(Number(addon.available)),
+    };
+  });
 }
 
 function getSugarLabel(value) {
@@ -149,6 +174,8 @@ export default function CoffeeOrderPage() {
 
     fetchData();
   }, [coffeeId]);
+
+  
 
   const toggleAddon = (addon) => {
     if (!addon.available) return;

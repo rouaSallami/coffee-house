@@ -4,13 +4,11 @@ export async function PATCH(request) {
 
     const url = new URL(request.url);
     const parts = url.pathname.split("/");
-    const id = parts[parts.length - 2]; // /api/orders/2/status
+    const id = parts[parts.length - 2];
 
     if (!id || id === "undefined") {
       return new Response(
-        JSON.stringify({
-          message: "Order id is missing",
-        }),
+        JSON.stringify({ message: "Order id is missing" }),
         {
           status: 400,
           headers: {
@@ -20,17 +18,17 @@ export async function PATCH(request) {
       );
     }
 
-    const response = await fetch(
-      `http://127.0.0.1:8000/api/orders/${id}/status`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(body),
-      }
-    );
+    const authorization = request.headers.get("authorization");
+
+    const response = await fetch(`http://127.0.0.1:8000/api/admin/orders/${id}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(authorization ? { Authorization: authorization } : {}),
+      },
+      body: JSON.stringify(body),
+    });
 
     const text = await response.text();
 

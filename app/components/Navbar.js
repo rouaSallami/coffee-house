@@ -40,12 +40,12 @@ export default function Navbar() {
     };
 
     const checkOrder = () => {
-      const order = localStorage.getItem("lastOrder");
+      const order = sessionStorage.getItem("lastOrder");
       setHasOrder(!!order);
     };
 
     const checkAuth = () => {
-      const auth = localStorage.getItem("isAuthenticated") === "true";
+      const auth = sessionStorage.getItem("isAuthenticated") === "true";
       setIsAuthenticated(auth);
     };
 
@@ -90,8 +90,8 @@ export default function Navbar() {
   }, [open]);
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("isAuthenticated");
+    sessionStorage.removeItem("user");
 
     setIsAuthenticated(false);
     setOpen(false);

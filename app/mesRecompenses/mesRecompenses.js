@@ -8,7 +8,7 @@ export default function MesRecompensesPage() {
   const [points, setPoints] = useState(0);
 
   useEffect(() => {
-    const storedPoints = Number(localStorage.getItem("points")) || 0;
+    const storedPoints = Number(sessionStorage.getItem("points")) || 0;
     setPoints(storedPoints);
   }, []);
 

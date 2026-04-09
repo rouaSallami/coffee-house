@@ -15,18 +15,14 @@ export default function AddonFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-sm sm:p-4">
       <div className="w-full max-w-lg rounded-2xl border border-dark/10 bg-base p-4 shadow-xl sm:rounded-3xl sm:p-6">
-        <h2 className="text-lg font-bold text-dark sm:text-xl">
-          {title}
-        </h2>
+        <h2 className="text-lg font-bold text-dark sm:text-xl">{title}</h2>
 
         <div className="mt-5 space-y-4">
           <input
             type="text"
             placeholder="Nom de l'addon"
             value={addon.name}
-            onChange={(e) =>
-              setAddon({ ...addon, name: e.target.value })
-            }
+            onChange={(e) => setAddon({ ...addon, name: e.target.value })}
             className="w-full rounded-xl border border-dark/10 bg-white px-4 py-3 text-sm text-dark outline-none"
           />
 
@@ -34,21 +30,33 @@ export default function AddonFormModal({
             type="number"
             placeholder="Prix"
             value={addon.price}
-            onChange={(e) =>
-              setAddon({ ...addon, price: e.target.value })
-            }
+            onChange={(e) => setAddon({ ...addon, price: e.target.value })}
             className="w-full rounded-xl border border-dark/10 bg-white px-4 py-3 text-sm text-dark outline-none"
           />
 
           <input
-            type="text"
-            placeholder="Image URL"
-            value={addon.image}
+            type="file"
+            accept="image/*"
             onChange={(e) =>
-              setAddon({ ...addon, image: e.target.value })
+              setAddon({
+                ...addon,
+                imageFile: e.target.files?.[0] || null,
+              })
             }
             className="w-full rounded-xl border border-dark/10 bg-white px-4 py-3 text-sm text-dark outline-none"
           />
+
+          {addon.imageFile && (
+            <p className="text-sm text-dark/70">
+              Image sélectionnée : {addon.imageFile.name}
+            </p>
+          )}
+
+          {!addon.imageFile && addon.image ? (
+            <p className="text-sm text-dark/70 break-all">
+              Image actuelle : {addon.image}
+            </p>
+          ) : null}
 
           {!isValid && (
             <p className="text-sm text-red-600">

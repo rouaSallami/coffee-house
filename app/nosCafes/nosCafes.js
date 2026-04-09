@@ -57,7 +57,7 @@ export default function NosCafesPage() {
     const storedFavorites = getUserData("favoriteCoffees", []);
     setFavorites(Array.isArray(storedFavorites) ? storedFavorites : []);
   } catch (error) {
-    console.error("Erreur lecture localStorage:", error);
+    console.error("Erreur lecture sessionStorage:", error);
     setFavorites([]);
   }
 }, []);
@@ -141,8 +141,8 @@ export default function NosCafesPage() {
         throw new Error("Erreur lors du chargement");
       }
 
-      const data = await res.json();
-      setSelectedCoffee(data);
+     const data = await res.json();
+setSelectedCoffee(data?.data ?? data ?? null);
     } catch (error) {
       console.error("openDetails error:", error);
     } finally {
@@ -324,14 +324,14 @@ export default function NosCafesPage() {
   )}
 
   {/* Modal */}
-  {selectedCoffee && (
-    <CoffeeDetailsModal
-      coffee={selectedCoffee}
-      onClose={() => setSelectedCoffee(null)}
-      isFavorite={favorites.some((item) => item.id === selectedCoffee?.id)}
-      onToggleFavorite={handleToggleFavorite}
-    />
-  )}
+  {selectedCoffee?.id && (
+  <CoffeeDetailsModal
+    coffee={selectedCoffee}
+    onClose={() => setSelectedCoffee(null)}
+    isFavorite={favorites.some((item) => item.id === selectedCoffee.id)}
+    onToggleFavorite={handleToggleFavorite}
+  />
+)}
 </div>
   );
 }

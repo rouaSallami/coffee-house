@@ -15,6 +15,12 @@ export default function NosCafesCard({
     ? Math.min(...coffee.sizes.map((s) => s.price))
     : coffee.price;
 
+  const imageSrc = coffee.image
+    ? coffee.image.startsWith("http")
+      ? coffee.image.replace("127.0.0.1", "localhost")
+      : `http://localhost:8000${coffee.image}`
+    : "/images/placeholder-coffee.png";
+
   return (
     <div
       className={`rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition ${
@@ -25,7 +31,7 @@ export default function NosCafesCard({
     >
       <div className="relative h-48 overflow-hidden">
         <Image
-          src={coffee.image}
+          src={imageSrc}
           alt={coffee.name}
           fill
           className="object-cover transition duration-300 hover:scale-105"
@@ -40,14 +46,14 @@ export default function NosCafesCard({
         )}
 
         {!coffee.available && (
-  <span
-    className={`absolute left-4 z-10 rounded-full px-3 py-1 text-xs font-semibold text-white shadow-md ${
-      coffee.isNew ? "top-14" : "top-4"
-    } bg-gray-600`}
-  >
-    Indisponible
-  </span>
-)}
+          <span
+            className={`absolute left-4 z-10 rounded-full px-3 py-1 text-xs font-semibold text-white shadow-md ${
+              coffee.isNew ? "top-14" : "top-4"
+            } bg-gray-600`}
+          >
+            Indisponible
+          </span>
+        )}
 
         <button
           onClick={() => onToggleFavorite(coffee)}
@@ -81,21 +87,21 @@ export default function NosCafesCard({
 
         <div className="mt-5 flex items-center gap-3">
           {coffee.available ? (
-  <Link
-    href={`/commande/${coffee.id}`}
-    className="flex-1 text-center rounded-2xl bg-primary text-white px-5 py-3 font-semibold transition hover:bg-secondary"
-  >
-    Choisir
-  </Link>
-) : (
-  <button
-    type="button"
-    disabled
-    className="flex-1 cursor-not-allowed rounded-2xl bg-primary px-5 py-3 text-center font-semibold text-white"
-  >
-    Choisir
-  </button>
-)}
+            <Link
+              href={`/commande/${coffee.id}`}
+              className="flex-1 text-center rounded-2xl bg-primary text-white px-5 py-3 font-semibold transition hover:bg-secondary"
+            >
+              Choisir
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="flex-1 cursor-not-allowed rounded-2xl bg-primary px-5 py-3 text-center font-semibold text-white"
+            >
+              Choisir
+            </button>
+          )}
 
           <button
             type="button"

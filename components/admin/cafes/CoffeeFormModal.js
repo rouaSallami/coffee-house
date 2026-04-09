@@ -107,12 +107,22 @@ export default function CoffeeFormModal({
           />
 
           <input
-            type="text"
-            placeholder="Image URL"
-            value={coffee.image}
-            onChange={(e) => setCoffee({ ...coffee, image: e.target.value })}
-            className="w-full rounded-xl border border-dark/10 bg-white px-4 py-3 text-sm text-dark outline-none"
-          />
+  type="file"
+  accept="image/*"
+  onChange={(e) =>
+    setCoffee({
+      ...coffee,
+      imageFile: e.target.files?.[0] || null,
+    })
+  }
+  className="w-full rounded-xl border border-dark/10 bg-white px-4 py-3 text-sm text-dark outline-none"
+/>
+
+{coffee.imageFile && (
+  <p className="text-xs text-dark/60">
+    Image: {coffee.imageFile.name}
+  </p>
+)}
 
           <label className="flex items-center gap-3 rounded-xl border border-dark/10 bg-white px-4 py-3">
             <input

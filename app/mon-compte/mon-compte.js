@@ -20,11 +20,11 @@ export default function MonComptePage() {
   const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
     const parsedUser = storedUser ? JSON.parse(storedUser) : null;
     setUser(parsedUser);
 
-    const storedPoints = Number(localStorage.getItem("points")) || 0;
+    const storedPoints = Number(sessionStorage.getItem("points")) || 0;
     setPoints(storedPoints);
 
     const storedCart = getUserData("cart", []);
@@ -44,8 +44,8 @@ export default function MonComptePage() {
   }, [user]);
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("isAuthenticated");
+    sessionStorage.removeItem("user");
 
     window.dispatchEvent(new Event("authChanged"));
     window.dispatchEvent(new Event("cartUpdated"));

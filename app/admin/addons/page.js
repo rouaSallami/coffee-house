@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 import AddonsHeader from "@/components/admin/addons/AddonsHeader";
 import AddonsFilters from "@/components/admin/addons/AddonsFilters";
@@ -23,6 +24,49 @@ import {
   toggleAddonAvailability,
 } from "@/lib/api/admin/addons";
 
+const toastStyles = {
+  style: {
+    background: "#1f2937",
+    color: "#fff",
+    borderRadius: "14px",
+    padding: "14px 16px",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
+    fontSize: "14px",
+    fontWeight: 600,
+  },
+};
+
+function ConfirmDeleteToast({ addonName, onConfirm, onCancel }) {
+  return (
+    <div className="flex min-w-[280px] max-w-sm flex-col gap-3">
+      <div>
+        <p className="text-sm font-semibold text-white">
+          Supprimer cet addon ?
+        </p>
+        <p className="mt-1 text-xs text-white/70">
+          {addonName ? `"${addonName}" sera supprimé définitivement.` : "Cette action est irréversible."}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-end gap-2">
+        <button
+          onClick={onCancel}
+          className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold text-white/85 transition hover:bg-white/10"
+        >
+          Annuler
+        </button>
+
+        <button
+          onClick={onConfirm}
+          className="rounded-full bg-red-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600"
+        >
+          Oui, supprimer
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminAddonsPage() {
   const [addons, setAddons] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,27 +82,25 @@ export default function AdminAddonsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Tous");
 
+  const loadAddons = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getAddons();
+      const normalized = Array.isArray(data)
+        ? data.map((addon) => normalizeAddon(addon))
+        : [];
+
+      setAddons(normalized);
+    } catch (error) {
+      console.error(error);
+      setAddons([]);
+      toast.error("Impossible de charger les addons ❌", toastStyles);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadAddons = async () => {
-  try {
-    const data = await getAddons();
-    console.log("ADDONS BACKEND RAW:", data);
-
-    const normalized = Array.isArray(data)
-      ? data.map((addon) => normalizeAddon(addon))
-      : [];
-
-    console.log("ADDONS NORMALIZED:", normalized);
-
-    setAddons(normalized);
-  } catch (error) {
-    console.error("LOAD ADDONS ERROR:", error);
-    setAddons([]);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
     loadAddons();
   }, []);
 
@@ -68,79 +110,125 @@ export default function AdminAddonsPage() {
 
   const handleDelete = async (id) => {
   try {
+    const loadingToast = toast.loading("Suppression...");
+
     await deleteAddon(id);
-    setAddons((prev) => prev.filter((addon) => addon.id !== id));
-  } catch (error) {
-    console.error("Erreur suppression addon:", error);
 
     setAddons((prev) => prev.filter((addon) => addon.id !== id));
-  } finally {
     setAddonToDelete(null);
+
+    toast.success("Supprimé avec succès 🗑️", {
+      id: loadingToast,
+    });
+  } catch (error) {
+    console.error(error);
+    toast.error("Erreur lors de la suppression ❌");
   }
 };
 
   const handleAddAddon = async () => {
-  if (!isAddonFormValid(newAddon)) return;
+    if (!isAddonFormValid(newAddon)) {
+      toast.error("Remplissez les champs !", {
+        ...toastStyles,
+        icon: "⚠️",
+      });
+      return;
+    }
 
-  try {
-    const payload = buildAddonPayload(newAddon);
-    const createdAddon = await createAddon(payload);
+    const loadingToast = toast.loading("Ajout en cours...", {
+      ...toastStyles,
+      icon: "✨",
+    });
 
-    setAddons((prev) => [normalizeAddon(createdAddon), ...prev]);
-    setShowAddForm(false);
-    setNewAddon(createEmptyAddon());
-  } catch (error) {
-    console.error("Erreur ajout addon:", error);
-  }
-};
+    try {
+      const payload = buildAddonPayload(newAddon);
+      const created = await createAddon(payload);
+
+      setAddons((prev) => [normalizeAddon(created), ...prev]);
+      setShowAddForm(false);
+      setNewAddon(createEmptyAddon());
+
+      toast.success("Addon ajouté avec succès 🎉", {
+        id: loadingToast,
+        ...toastStyles,
+        icon: "☕",
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de l'ajout ❌", {
+        id: loadingToast,
+        ...toastStyles,
+      });
+    }
+  };
 
   const handleOpenEdit = (addon) => {
     setAddonToEdit(addon);
     setEditAddon({
+      id: addon.id,
       name: addon.name || "",
       price: addon.price ?? "",
       image: addon.image || "",
+      imageFile: null,
+      available: addon.available,
     });
   };
 
   const handleUpdateAddon = async () => {
-  if (!addonToEdit || !isAddonFormValid(editAddon)) return;
+    if (!addonToEdit || !isAddonFormValid(editAddon)) {
+      toast.error("Champs invalides ❌", {
+        ...toastStyles,
+        icon: "⚠️",
+      });
+      return;
+    }
 
-  try {
-    const payload = {
-      name: editAddon.name.trim(),
-      price: Number(editAddon.price) || 0,
-      image: editAddon.image.trim(),
-    };
+    const loadingToast = toast.loading("Modification en cours...", {
+      ...toastStyles,
+      icon: "✏️",
+    });
 
-    const updatedAddon = await updateAddon(addonToEdit.id, payload);
+    try {
+      const payload = buildUpdatedAddon(editAddon);
+      const updated = await updateAddon(addonToEdit.id, payload);
 
-    setAddons((prev) =>
-      prev.map((addon) =>
-        addon.id === addonToEdit.id ? normalizeAddon(updatedAddon) : addon
-      )
-    );
+      setAddons((prev) =>
+        prev.map((addon) =>
+          addon.id === addonToEdit.id ? normalizeAddon(updated) : addon
+        )
+      );
 
-    setAddonToEdit(null);
-    setEditAddon(createEmptyAddon());
-  } catch (error) {
-    console.error("Erreur modification addon:", error);
-  }
-};
+      setAddonToEdit(null);
+      setEditAddon(createEmptyAddon());
 
- const handleToggleAvailability = async (id) => {
-  try {
-    const updatedAddon = await toggleAddonAvailability(id);
+      toast.success("Addon modifié ✏️", {
+        id: loadingToast,
+        ...toastStyles,
+        icon: "✅",
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de la modification ❌", {
+        id: loadingToast,
+        ...toastStyles,
+      });
+    }
+  };
 
-    setAddons((prev) =>
-      prev.map((addon) =>
-        addon.id === id ? normalizeAddon(updatedAddon) : addon
-      )
-    );
-  } catch (error) {
-    console.error("Erreur toggle disponibilité:", error);
-  }
-};
+  const handleToggleAvailability = async (id) => {
+    try {
+      const updated = await toggleAddonAvailability(id);
+
+      setAddons((prev) =>
+        prev.map((addon) =>
+          addon.id === id ? normalizeAddon(updated) : addon
+        )
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors du changement de statut ❌", toastStyles);
+    }
+  };
 
   const handleCloseAddModal = () => {
     setShowAddForm(false);

@@ -62,12 +62,16 @@ export async function DELETE(request) {
       );
     }
 
-    const response = await fetch(`http://127.0.0.1:8000/api/orders/${id}`, {
-      method: "DELETE",
-      headers: {
-        Accept: "application/json",
-      },
-    });
+    const authorization = request.headers.get("authorization");
+
+const response = await fetch(`http://127.0.0.1:8000/api/admin/orders/${id}`, {
+  method: "GET",
+  headers: {
+    Accept: "application/json",
+    ...(authorization ? { Authorization: authorization } : {}),
+  },
+  cache: "no-store",
+});
 
     const text = await response.text();
 

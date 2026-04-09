@@ -13,7 +13,7 @@ export default function HomeCoffeesSection() {
       try {
         setIsLoading(true);
 
-        const res = await fetch("http://127.0.0.1:8000/api/cafes", {
+        const res = await fetch("/backend/coffees", {
           method: "GET",
           cache: "no-store",
           headers: {

@@ -9,7 +9,7 @@ export default function ThemeToggle() {
 
   useEffect(() => {
 
-    const savedTheme = localStorage.getItem("theme");
+    const savedTheme = sessionStorage.getItem("theme");
 
     if (savedTheme === "dark") {
       document.documentElement.classList.add("dark");
@@ -24,11 +24,11 @@ export default function ThemeToggle() {
 
     if (dark) {
       html.classList.remove("dark");
-      localStorage.setItem("theme", "light");
+      sessionStorage.setItem("theme", "light");
       setDark(false);
     } else {
       html.classList.add("dark");
-      localStorage.setItem("theme", "dark");
+      sessionStorage.setItem("theme", "dark");
       setDark(true);
     }
 
