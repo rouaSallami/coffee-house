@@ -110,7 +110,7 @@ export default function Navbar() {
     { href: "/contact", label: "Contact" },
     { href: "/avisClient", label: "Avis" },
     { href: "/mesRecompenses", label: "Récompenses" },
-    ...(hasOrder ? [{ href: "/suivi-commande", label: "Suivi commande" }] : []),
+    ...(hasOrder ? [{ href: "/mes-commandes", label: "Mes commandes" }] : []),
   ];
 
   const isActiveLink = (href) => pathname === href;

@@ -25,6 +25,8 @@ export default function AdminCommandesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderToDelete, setOrderToDelete] = useState(null);
+  const [exitingOrderId, setExitingOrderId] = useState(null);
+  
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -51,7 +53,13 @@ const res = await fetch("/backend/admin/orders", {
         }
 
         const safeOrders = Array.isArray(data) ? data : data.orders || [];
-        setOrders(normalizeOrders(safeOrders));
+const normalized = normalizeOrders(safeOrders);
+
+const activeOrders = normalized.filter(
+  (order) => order.isArchived === false
+);
+
+setOrders(activeOrders);
       } catch (error) {
         console.error("Load orders error:", error);
         setOrders([]);
@@ -91,27 +99,60 @@ const res = await fetch("/backend/admin/orders", {
     }
 
     if (!res.ok) {
-      console.error("Update status error:", data);
-      toast.error(data.message || "Erreur lors de la mise à jour du statut");
+      console.error("Update status error:", {
+        status: res.status,
+        data,
+        raw: text,
+        sentStatus: newStatus,
+      });
+
+      toast.error(
+        data.message || text || `Erreur lors de la mise à jour du statut (${res.status})`
+      );
       return;
     }
 
-    const updatedOrders = orders.map((order) =>
-      order.id === orderId
-        ? { ...order, status: data?.order?.status || newStatus }
-        : order
+    const updatedOrder = data?.order;
+    const isArchived = Boolean(updatedOrder?.is_archived);
+
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === orderId
+          ? {
+              ...order,
+              status: updatedOrder?.status || newStatus,
+              isArchived,
+              completedAt: updatedOrder?.completed_at || null,
+            }
+          : order
+      )
     );
 
-    setOrders(updatedOrders);
-
     if (selectedOrder?.id === orderId) {
-      const updatedSelectedOrder = updatedOrders.find(
-        (order) => order.id === orderId
+      setSelectedOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: updatedOrder?.status || newStatus,
+              isArchived,
+              completedAt: updatedOrder?.completed_at || null,
+            }
+          : null
       );
-      setSelectedOrder(updatedSelectedOrder || null);
     }
 
     toast.success("Statut mis à jour avec succès");
+
+    // ✅ إذا ولات historique: animation خفيفة وبعدها تتنحى
+    if (isArchived) {
+      setExitingOrderId(orderId);
+
+      setTimeout(() => {
+        setOrders((prev) => prev.filter((order) => order.id !== orderId));
+        setSelectedOrder((prev) => (prev?.id === orderId ? null : prev));
+        setExitingOrderId(null);
+      }, 650);
+    }
   } catch (error) {
     console.error("Update status error:", error);
     toast.error("Server error");
@@ -206,6 +247,7 @@ const res = await fetch("/backend/admin/orders", {
           onView={setSelectedOrder}
           onDelete={setOrderToDelete}
           onUpdateStatus={handleUpdateStatus}
+          exitingOrderId={exitingOrderId}
         />
       </div>
 

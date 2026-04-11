@@ -6,12 +6,21 @@ export default function OrderCard({
   onView,
   onDelete,
   onUpdateStatus,
+  isExiting = false,
 }) {
   const totalItems = getOrderItemsCount(order);
   const formattedDate = formatOrderDate(order.createdAt);
 
   return (
-    <div className="rounded-2xl border border-dark/10 bg-white/40 p-5 shadow-sm">
+    <div
+  className={`rounded-2xl border border-dark/10 p-5 shadow-sm transition-all duration-500 ${
+    isExiting
+      ? "translate-x-6 scale-[0.98] opacity-0 blur-[1px]"
+      : order.isArchived
+      ? "bg-gray-100 opacity-60"
+      : "bg-white/40"
+  }`}
+>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-3">
@@ -56,27 +65,30 @@ export default function OrderCard({
             Voir les détails
           </button>
 
-          <button
-            onClick={() => onDelete(order)}
-            className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
-          >
-            Supprimer
-          </button>
+          {!order.isArchived && (
+  <button
+    onClick={() => onDelete(order)}
+    className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+  >
+    Supprimer
+  </button>
+)}
         </div>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
         {getStatusesByMode(order.mode).map((status) => {
           const isActive = order.status === status.key;
+const isDisabled = isActive || order.isArchived;
 
           return (
             <button
               key={status.key}
               onClick={() => onUpdateStatus(order.id, status.key)}
-              disabled={isActive}
+              disabled={isDisabled}
               className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-                isActive
-                  ? "cursor-not-allowed bg-primary text-white opacity-90"
+                isDisabled
+                  ? "cursor-not-allowed bg-primary text-white opacity-60"
                   : "border border-dark/10 bg-base text-dark hover:bg-white"
               }`}
             >

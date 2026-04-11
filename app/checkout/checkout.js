@@ -22,52 +22,52 @@ export default function CheckoutPage() {
   );
 
   const getValidationSchema = () => {
-    if (mode === "livraison") {
-      return Yup.object({
-        name: Yup.string().required("Le nom est requis"),
-        phone: Yup.string().required("Le téléphone est requis"),
-        address: Yup.string().required("L’adresse est requise"),
-        instructions: Yup.string(),
-      });
-    }
+  if (mode === "livraison") {
+    return Yup.object({
+      name: Yup.string().required("Le nom est requis"),
+      phone: Yup.string().required("Le téléphone est requis"),
+      address: Yup.string().required("L’adresse est requise"),
+      instructions: Yup.string(),
+    });
+  }
 
-    if (mode === "surplace") {
-  return Yup.object({
-    name: Yup.string().required("Le nom est requis"),
-    phone: Yup.string().required("Le téléphone est requis"),
-    note: Yup.string(),
-  });
-}
+  if (mode === "emporter") {
+    return Yup.object({
+      name: Yup.string().required("Le nom est requis"),
+      phone: Yup.string().required("Le téléphone est requis"),
+      pickupTime: Yup.string(),
+    });
+  }
 
-    if (mode === "surplace") {
-      return Yup.object({
-        name: Yup.string().required("Le nom est requis"),
-        note: Yup.string(),
-      });
-    }
+  if (mode === "surplace") {
+    return Yup.object({
+      name: Yup.string().required("Le nom est requis"),
+      note: Yup.string(),
+    });
+  }
 
-    return Yup.object({});
-  };
+  return Yup.object({});
+};
 
-  const buildOrderNotes = (values) => {
-    const notes = [];
+const buildOrderNotes = (values) => {
+  const notes = [];
 
-    if (mode) notes.push(`Mode: ${mode}`);
-    if (mode === "livraison" && values.address) {
-      notes.push(`Adresse: ${values.address}`);
-    }
-    if (mode === "livraison" && values.instructions) {
-      notes.push(`Instructions: ${values.instructions}`);
-    }
-    if (mode === "emporter" && values.pickupTime) {
-      notes.push(`Heure de retrait: ${values.pickupTime}`);
-    }
-    if (mode === "surplace" && values.note) {
-      notes.push(`Note: ${values.note}`);
-    }
+  if (mode) notes.push(`Mode: ${mode}`);
+  if (mode === "livraison" && values.address) {
+    notes.push(`Adresse: ${values.address}`);
+  }
+  if (mode === "livraison" && values.instructions) {
+    notes.push(`Instructions: ${values.instructions}`);
+  }
+  if (mode === "emporter" && values.pickupTime) {
+    notes.push(`Heure de retrait: ${values.pickupTime}`);
+  }
+  if (mode === "surplace" && values.note) {
+    notes.push(`Note: ${values.note}`);
+  }
 
-    return notes.join(" | ");
-  };
+  return notes.join(" | ");
+};
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-secondary pt-20 text-dark">
@@ -219,7 +219,7 @@ if (!res.ok) {
                     setUserData("cart", []);
                     window.dispatchEvent(new Event("cartUpdated"));
 
-                    window.location.href = "/suivi-commande";
+                    window.location.href = "/mes-commandes";
                   } catch (error) {
                     console.error(error);
                     alert("Server error");
@@ -245,7 +245,7 @@ if (!res.ok) {
                     />
                   </div>
 
-{(mode === "livraison" || mode === "emporter" || mode === "surplace") && (                    <div>
+{(mode === "livraison" || mode === "emporter") && (                    <div>
                       <label className="mb-2 block font-semibold text-accent">
                         Téléphone
                       </label>

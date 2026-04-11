@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { History } from "lucide-react";
 
 import {
   LayoutDashboard,
@@ -36,6 +37,14 @@ const links = [
     label: "Commandes",
     icon: ClipboardList,
   },
+
+  
+  {
+    href: "/admin/historique-commandes",
+    label: "Historique",
+    icon: History,
+  },
+
   {
     href: "/admin/utilisateurs",
     label: "Utilisateurs",

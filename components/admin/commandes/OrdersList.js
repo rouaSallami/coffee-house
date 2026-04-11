@@ -9,9 +9,10 @@ export default function OrdersList({
   onView,
   onDelete,
   onUpdateStatus,
+  exitingOrderId,
 }) {
   return (
-    <SectionCard className="!p-8">
+    <SectionCard className="p-8!">
       {isLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, index) => (
@@ -48,6 +49,7 @@ export default function OrdersList({
               onView={onView}
               onDelete={onDelete}
               onUpdateStatus={onUpdateStatus}
+              isExiting={order.id === exitingOrderId}
             />
           ))}
         </div>

@@ -140,23 +140,24 @@ export default function OrderDetailsModal({
 
         <div className="mt-6 flex flex-wrap gap-3">
           {getStatusesByMode(order.mode).map((status) => {
-            const isActive = order.status === status.key;
+  const isActive = order.status === status.key;
+  const isDisabled = isActive || order.isArchived;
 
-            return (
-              <button
-                key={status.key}
-                onClick={() => onUpdateStatus(order.id, status.key)}
-                disabled={isActive}
-                className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                  isActive
-                    ? "cursor-not-allowed bg-primary text-white opacity-90"
-                    : "border border-dark/10 bg-white text-dark hover:bg-base"
-                }`}
-              >
-                {status.label}
-              </button>
-            );
-          })}
+  return (
+    <button
+      key={status.key}
+      onClick={() => onUpdateStatus(order.id, status.key)}
+      disabled={isDisabled}
+      className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
+        isDisabled
+          ? "cursor-not-allowed bg-primary text-white opacity-60"
+          : "border border-dark/10 bg-white text-dark hover:bg-base"
+      }`}
+    >
+      {status.label}
+    </button>
+  );
+})}
         </div>
       </div>
     </div>
