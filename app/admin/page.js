@@ -12,6 +12,7 @@ import RecentCoffeesTable from "@/components/admin/dashboard/RecentCoffeesTable"
 import QuickActionsCard from "@/components/admin/dashboard/QuickActionsCard";
 import AdminAlertsCard from "@/components/admin/dashboard/AdminAlertsCard";
 import CoffeesToWatchCard from "@/components/admin/dashboard/CoffeesToWatchCard";
+import OrdersRevenueChartCard from "@/components/admin/dashboard/OrdersRevenueChartCard";
 
 import { getCategoryLabel } from "@/lib/admin/dashboard/helpers";
 import {
@@ -24,6 +25,7 @@ import {
   buildDashboardCards,
   buildAdminAlerts,
   buildCoffeesToWatch,
+  buildOrdersRevenueChartData,
 } from "@/lib/admin/dashboard/dashboardUtils";
 import { getCafes } from "@/lib/api/admin/cafes";
 import { getDashboardData } from "@/lib/api/admin/dashboard";
@@ -83,6 +85,10 @@ export default function AdminDashboardPage() {
     return buildDashboardCards(stats);
   }, [stats]);
 
+  const ordersRevenueChartData = useMemo(() => {
+  return buildOrdersRevenueChartData(dashboardData.orders || []);
+}, [dashboardData.orders]);
+
   const adminAlerts = useMemo(() => {
     return buildAdminAlerts(normalizedCoffees);
   }, [normalizedCoffees]);
@@ -96,6 +102,13 @@ export default function AdminDashboardPage() {
       <DashboardHeader />
 
       <DashboardStats cards={dashboardCards} isLoading={isLoading} />
+
+      <div className="mb-8">
+  <OrdersRevenueChartCard
+    chartData={ordersRevenueChartData}
+    isLoading={isLoading}
+  />
+</div>
 
       <div className="mb-8 grid gap-5 xl:grid-cols-[1.4fr_1fr]">
         <CategoryChartCard

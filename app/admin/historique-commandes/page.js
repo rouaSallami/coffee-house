@@ -8,6 +8,7 @@ import OrdersStatusFilters from "@/components/admin/commandes/OrdersStatusFilter
 import OrdersList from "@/components/admin/commandes/OrdersList";
 import OrderDetailsModal from "@/components/admin/commandes/OrderDetailsModal";
 import toast from "react-hot-toast";
+import HistorySummaryChart from "@/components/admin/commandes/HistorySummaryChart";
 
 import {
   normalizeOrders,
@@ -23,6 +24,9 @@ export default function AdminHistoriqueCommandesPage() {
   const [selectedMode, setSelectedMode] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const [dateFrom, setDateFrom] = useState("");
+const [dateTo, setDateTo] = useState("");
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -68,8 +72,30 @@ export default function AdminHistoriqueCommandesPage() {
   }, []);
 
   const filteredOrders = useMemo(() => {
-    return filterOrders(orders, selectedStatus, selectedMode, searchTerm);
-  }, [orders, selectedStatus, selectedMode, searchTerm]);
+  return filterOrders(
+    orders,
+    selectedStatus,
+    selectedMode,
+    searchTerm,
+    dateFrom,
+    dateTo
+  );
+}, [orders, selectedStatus, selectedMode, searchTerm, dateFrom, dateTo]);
+
+
+
+const historyStats = useMemo(() => {
+  const totalOrders = filteredOrders.length;
+
+  const totalRevenue = filteredOrders.reduce((sum, order) => {
+    return sum + Number(order.total || order.totalPrice || 0);
+  }, 0);
+
+  return {
+    totalOrders,
+    totalRevenue,
+  };
+}, [filteredOrders]);
 
   const handleUpdateStatus = async () => {
     toast.error("Les commandes archivées ne peuvent pas être modifiées");
@@ -92,19 +118,55 @@ export default function AdminHistoriqueCommandesPage() {
 </div>
 
         <OrdersToolbar
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          selectedMode={selectedMode}
-          setSelectedMode={setSelectedMode}
-          isLoading={isLoading}
-        />
+  searchTerm={searchTerm}
+  setSearchTerm={setSearchTerm}
+  selectedMode={selectedMode}
+  setSelectedMode={setSelectedMode}
+  dateFrom={dateFrom}
+  setDateFrom={setDateFrom}
+  dateTo={dateTo}
+  setDateTo={setDateTo}
+  showModeFilter={false}
+  isLoading={isLoading}
+/>
+
+
+<div className="mb-4 grid gap-4 md:grid-cols-2">
+  <div className="rounded-3xl border border-dark/10 bg-white/40 p-5 shadow-sm">
+    <p className="text-sm text-dark/60">Commandes dans l’historique</p>
+    <p className="mt-2 text-3xl font-bold text-dark">
+      {historyStats.totalOrders}
+    </p>
+    <p className="mt-3 text-sm text-dark/65">
+      Résultat selon les filtres appliqués
+    </p>
+  </div>
+
+  <div className="rounded-3xl border border-dark/10 bg-white/40 p-5 shadow-sm">
+    <p className="text-sm text-dark/60">Revenus dans l’historique</p>
+    <p className="mt-2 text-3xl font-bold text-dark">
+      {historyStats.totalRevenue.toFixed(2)} DT
+    </p>
+    <p className="mt-3 text-sm text-dark/65">
+      Total des commandes affichées
+    </p>
+  </div>
+</div>
+
+<div className="mb-6">
+  <HistorySummaryChart
+    totalOrders={historyStats.totalOrders}
+    totalRevenue={historyStats.totalRevenue}
+  />
+</div>
 
         <OrdersStatusFilters
-          selectedStatus={selectedStatus}
-          setSelectedStatus={setSelectedStatus}
-          getCountByStatus={handleGetCountByStatus}
-          isLoading={isLoading}
-        />
+  selectedStatus={selectedStatus}
+  setSelectedStatus={setSelectedStatus}
+  getCountByStatus={handleGetCountByStatus}
+  isLoading={isLoading}
+  variant="history"
+/>
 
         <OrdersList
           orders={filteredOrders}

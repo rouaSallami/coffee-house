@@ -3,15 +3,23 @@ export default function OrdersStatusFilters({
   setSelectedStatus,
   getCountByStatus,
   isLoading = false,
+  variant = "active",
 }) {
-  const filters = [
+  const activeFilters = [
     { key: "all", label: "Toutes" },
     { key: "confirmed", label: "Confirmées" },
     { key: "preparing", label: "En préparation" },
     { key: "ready", label: "Prêtes" },
     { key: "out_for_delivery", label: "En livraison" },
-    { key: "delivered", label: "Terminées" },
   ];
+
+  const historyFilters = [
+    { key: "all", label: "Toutes" },
+    { key: "delivered", label: "Terminées" },
+    { key: "cancelled", label: "Annulées" },
+  ];
+
+  const filters = variant === "history" ? historyFilters : activeFilters;
 
   return (
     <div className="mb-6 flex flex-wrap gap-3">

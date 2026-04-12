@@ -11,6 +11,7 @@ export default function SuiviCommande() {
   const orderId = params?.id;
 
   const [order, setOrder] = useState(null);
+const [isHistoryOrder, setIsHistoryOrder] = useState(false);
   const [loading, setLoading] = useState(true);
   const hasBoundListener = useRef(false);
 
@@ -50,12 +51,24 @@ export default function SuiviCommande() {
         return;
       }
 
+      const completedAt = data?.completed_at
+  ? new Date(data.completed_at).getTime()
+  : null;
+
+const now = Date.now();
+
+const shouldBeInHistory =
+  completedAt && (now - completedAt) / (1000 * 60) >= 15;
+
+setIsHistoryOrder(Boolean(shouldBeInHistory));
+
       const normalizedOrder = {
         id: data.id,
         mode: data.mode || "livraison",
         status: data.status || "confirmed",
         total: Number(data.total_price || 0),
         createdAt: data.created_at || null,
+        completedAt: data.completed_at || null,
         customer: {
           name: data.customer_name || "",
           phone: data.customer_phone || "",
@@ -191,6 +204,41 @@ export default function SuiviCommande() {
       </div>
     );
   }
+
+  if (isHistoryOrder) {
+  return (
+    <div className="relative min-h-screen mt-16 overflow-hidden bg-base text-dark">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(198,154,107,0.10),_transparent_40%)]" />
+      <div className="relative mx-auto max-w-3xl px-6 py-20">
+        <div className="rounded-3xl border border-primary/10 bg-white/70 p-10 text-center shadow-lg backdrop-blur-sm">
+          <h1 className="mb-4 font-heading text-3xl font-bold text-dark">
+            Cette commande est dans l’historique
+          </h1>
+
+          <p className="mb-8 text-dark/70">
+            Cette commande n’est plus affichée dans vos commandes actives.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/historique-commandes"
+              className="inline-block rounded-2xl bg-primary px-6 py-3 font-semibold text-white shadow-md transition hover:opacity-95"
+            >
+              Aller à l’historique
+            </Link>
+
+            <Link
+              href="/mes-commandes"
+              className="inline-block rounded-2xl border border-dark/10 bg-white px-6 py-3 font-semibold text-dark shadow-sm transition hover:bg-base"
+            >
+              Retour à mes commandes
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
   const currentIndex = steps.findIndex((step) => step.key === order.status);
 

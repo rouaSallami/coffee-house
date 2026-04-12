@@ -1,59 +1,162 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 export default function MesCommandesPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exitingOrderId, setExitingOrderId] = useState(null);
+
+  const isStillActiveForClient = (order) => {
+    if (!order?.completed_at) return true;
+
+    const completedAt = new Date(order.completed_at).getTime();
+    const now = Date.now();
+    const diffMinutes = (now - completedAt) / (1000 * 60);
+
+    return diffMinutes < 15;
+  };
+
+  const loadOrders = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+
+      if (!token) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("/backend/orders", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+
+      const text = await res.text();
+
+      let data = [];
+      try {
+        data = text ? JSON.parse(text) : [];
+      } catch {
+        data = [];
+      }
+
+      if (!res.ok) {
+        console.error("Load orders error:", data);
+        setOrders([]);
+        return;
+      }
+
+      const safeOrders = Array.isArray(data) ? data : data.orders || [];
+
+      const activeOrders = safeOrders.filter((order) =>
+        isStillActiveForClient(order)
+      );
+
+      setOrders(activeOrders);
+    } catch (error) {
+      console.error("Load orders error:", error);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        const token = sessionStorage.getItem("token");
-
-        if (!token) {
-          setOrders([]);
-          setLoading(false);
-          return;
-        }
-
-        const res = await fetch("/backend/orders", {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          cache: "no-store",
-        });
-
-        const text = await res.text();
-
-        let data = [];
-        try {
-          data = text ? JSON.parse(text) : [];
-        } catch {
-          data = [];
-        }
-
-        if (!res.ok) {
-          console.error("Load orders error:", data);
-          setOrders([]);
-          return;
-        }
-
-        const safeOrders = Array.isArray(data) ? data : data.orders || [];
-        setOrders(safeOrders);
-      } catch (error) {
-        console.error("Load orders error:", error);
-        setOrders([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadOrders();
   }, []);
+
+  const handleCancelOrder = (orderId) => {
+  toast(
+    (t) => (
+      <div className="w-full max-w-sm rounded-2xl bg-white p-4 shadow-lg border border-dark/10">
+        <p className="text-sm font-semibold text-dark text-center">
+          Êtes-vous sûr de vouloir annuler cette commande ?
+        </p>
+
+        <div className="mt-4 flex justify-center gap-3">
+          {/* ❌ bouton fermer */}
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="rounded-xl border border-dark/10 px-4 py-2 text-sm font-semibold text-dark transition hover:bg-base"
+          >
+            Annuler
+          </button>
+
+          {/* ✅ confirmer */}
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+
+              try {
+                const token = sessionStorage.getItem("token");
+
+                const res = await fetch(`/backend/orders/${orderId}/cancel`, {
+                  method: "PATCH",
+                  headers: {
+                    Accept: "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                  toast.error(data.message || "Erreur lors de l’annulation");
+                  return;
+                }
+
+                setOrders((prev) =>
+                  prev.map((order) =>
+                    order.id === orderId
+                      ? {
+                          ...order,
+                          status: data?.order?.status || "cancelled",
+                          completed_at:
+                            data?.order?.completed_at ||
+                            new Date().toISOString(),
+                          is_archived: Boolean(data?.order?.is_archived),
+                        }
+                      : order
+                  )
+                );
+
+                setExitingOrderId(orderId);
+
+                setTimeout(() => {
+                  setOrders((prev) =>
+                    prev.filter((o) => o.id !== orderId)
+                  );
+                  setExitingOrderId(null);
+                }, 650);
+
+                toast.success("Commande annulée avec succès");
+              } catch (error) {
+                console.error(error);
+                toast.error("Erreur serveur");
+              }
+            }}
+            className="rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+          >
+            Confirmer
+          </button>
+        </div>
+      </div>
+    ),
+    {
+      duration: 6000,
+      position: "top-center", // ✅ centré
+    }
+  );
+};
+
+  const visibleOrders = useMemo(() => orders, [orders]);
 
   if (loading) {
     return (
@@ -65,23 +168,32 @@ export default function MesCommandesPage() {
     );
   }
 
-  if (!orders.length) {
+  if (!visibleOrders.length) {
     return (
       <div className="relative min-h-screen mt-16 bg-base text-dark">
         <div className="flex flex-col items-center justify-center py-40 text-center">
-          <h1 className="text-3xl font-bold mb-4">Mes commandes</h1>
-          <p className="text-dark/70">Aucune commande trouvée.</p>
+          <h1 className="mb-4 text-3xl font-bold">Mes commandes</h1>
+          <p className="text-dark/70">Aucune commande en cours.</p>
+
+          <Link
+            href="/historique-commandes"
+            className="mt-6 rounded-2xl bg-primary px-5 py-3 font-semibold text-white shadow-md transition hover:opacity-95"
+          >
+            Voir l’historique
+          </Link>
         </div>
       </div>
     );
   }
 
   const statusStyles = {
+    pending: "bg-creamy text-primary border border-primary/15",
     confirmed: "bg-creamy text-primary border border-primary/15",
     preparing: "bg-secondary/15 text-primary border border-secondary/30",
     ready: "bg-beige/60 text-dark border border-dark/10",
     out_for_delivery: "bg-beige/60 text-dark border border-dark/10",
     delivered: "bg-primary text-white border border-primary",
+    cancelled: "bg-red-50 text-red-600 border border-red-200",
   };
 
   return (
@@ -91,32 +203,37 @@ export default function MesCommandesPage() {
       <div className="relative mx-auto max-w-5xl px-6 py-10">
         <div className="mb-10 text-center">
           <p className="text-sm uppercase tracking-[0.2em] text-dark/70">
-            Historique
+            En cours
           </p>
 
-          <h1 className="mt-3 text-4xl font-bold">
-            Mes commandes
-          </h1>
+          <h1 className="mt-3 text-4xl font-bold">Mes commandes</h1>
 
           <p className="mt-3 text-dark/70">
-            Consultez toutes vos commandes et suivez leur état.
+            Consultez vos commandes actives et suivez leur état.
           </p>
+
+          <Link
+            href="/historique-commandes"
+            className="mt-5 inline-block rounded-2xl border border-dark/10 bg-white/40 px-5 py-3 font-semibold text-dark shadow-sm transition hover:bg-white/60"
+          >
+            Aller à l’historique
+          </Link>
         </div>
 
         <div className="space-y-6">
-          {orders.map((order) => (
+          {visibleOrders.map((order) => (
             <div
               key={order.id}
-              className="rounded-3xl border border-dark/10 bg-white/30 p-6 shadow-xl backdrop-blur-md"
+              className={`rounded-3xl border border-dark/10 p-6 shadow-xl backdrop-blur-md transition-all duration-500 ${
+                exitingOrderId === order.id
+                  ? "translate-x-6 scale-[0.98] opacity-0 blur-[1px]"
+                  : "bg-white/30"
+              }`}
             >
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+              <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-sm text-dark/60">
-                    Commande #{order.id}
-                  </p>
-                  <p className="font-bold text-lg capitalize">
-                    {order.mode}
-                  </p>
+                  <p className="text-sm text-dark/60">Commande #{order.id}</p>
+                  <p className="text-lg font-bold capitalize">{order.mode}</p>
                 </div>
 
                 <span
@@ -129,7 +246,7 @@ export default function MesCommandesPage() {
                 </span>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-4 mb-4">
+              <div className="mb-4 grid gap-4 sm:grid-cols-2">
                 <div>
                   <p className="text-sm text-dark/60">Date</p>
                   <p className="font-semibold">
@@ -147,13 +264,28 @@ export default function MesCommandesPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              {order.completed_at && (
+                <div className="mb-4 rounded-2xl border border-dark/10 bg-white/40 px-4 py-3 text-sm text-dark/70">
+                  Cette commande quittera cette page 15 minutes après sa finalisation.
+                </div>
+              )}
+
+              <div className="flex flex-wrap justify-end gap-3">
                 <Link
                   href={`/suivi-commande/${order.id}`}
                   className="rounded-2xl bg-primary px-5 py-2 font-semibold text-white shadow-md transition hover:opacity-95"
                 >
                   Suivre
                 </Link>
+
+                {order.status === "pending" && (
+                  <button
+                    onClick={() => handleCancelOrder(order.id)}
+                    className="rounded-2xl bg-red-500 px-5 py-2 font-semibold text-white shadow-md transition hover:opacity-90"
+                  >
+                    Annuler
+                  </button>
+                )}
               </div>
             </div>
           ))}
