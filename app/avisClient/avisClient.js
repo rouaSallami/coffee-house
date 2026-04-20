@@ -75,6 +75,37 @@ const MOCK_AUTH_USER = {
 
 const ITEMS_PER_PAGE = 6;
 
+const fetchHasDeliveredOrder = async () => {
+  try {
+    const token = sessionStorage.getItem("token");
+
+    if (!token) return false;
+
+    const res = await fetch("/backend/orders", {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      console.error("Orders fetch failed");
+      return false;
+    }
+
+    const orders = await res.json();
+
+    console.log("ORDERS:", orders); // 👈 debug
+
+    return Array.isArray(orders)
+      ? orders.some((o) => ["delivered", "Livrée"].includes(o.status))
+      : false;
+  } catch (e) {
+    console.error("fetchHasDeliveredOrder error:", e);
+    return false;
+  }
+};
+
 function formatDate(dateString) {
   try {
     return new Date(dateString).toLocaleDateString("fr-FR", {
@@ -269,6 +300,7 @@ function ReviewFormModal({
   open,
   onClose,
   authUser,
+  existingReview,
   onSubmitReview,
   isSubmitting,
   validationErrors,
@@ -279,12 +311,19 @@ function ReviewFormModal({
   });
   const [hoveredStar, setHoveredStar] = useState(0);
 
-  useEffect(() => {
-    if (!open) {
-      setForm({ rating: 0, comment: "" });
-      setHoveredStar(0);
-    }
-  }, [open]);
+ useEffect(() => {
+  if (open) {
+    setForm({
+      rating: existingReview?.rating ? Number(existingReview.rating) : 0,
+      comment: existingReview?.comment || "",
+    });
+    setHoveredStar(0);
+    return;
+  }
+
+  setForm({ rating: 0, comment: "" });
+  setHoveredStar(0);
+}, [open, existingReview]);
 
   if (!open) return null;
 
@@ -313,13 +352,13 @@ function ReviewFormModal({
 
           <div className="mb-6 pr-12">
             <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary">
-              <MessageCircleHeart size={16} />
-              Laisser votre avis
-            </div>
+  <MessageCircleHeart size={16} />
+  {existingReview ? "Modifier votre avis" : "Laisser votre avis"}
+</div>
 
-            <h3 className="font-heading text-2xl font-bold text-dark">
-              Partagez votre expérience
-            </h3>
+           <h3 className="font-heading text-2xl font-bold text-dark">
+  {existingReview ? "Mettez à jour votre expérience" : "Partagez votre expérience"}
+</h3>
 
             <p className="mt-2 text-dark/70">
               Merci{" "}
@@ -410,7 +449,11 @@ function ReviewFormModal({
                 className="inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl bg-dark px-5 py-3 font-semibold text-accent shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Send size={18} />
-                {isSubmitting ? "Envoi..." : "Publier mon avis"}
+                {isSubmitting
+  ? "Envoi..."
+  : existingReview
+  ? "Mettre à jour mon avis"
+  : "Publier mon avis"}
                 <ChevronRight size={17} />
               </button>
             </div>
@@ -420,6 +463,56 @@ function ReviewFormModal({
     </div>
   );
 }
+
+
+const fetchReviews = async () => {
+  const res = await fetch("/backend/reviews");
+
+  if (!res.ok) {
+    throw new Error("Erreur lors du chargement des avis");
+  }
+
+  return res.json();
+};
+
+const fetchAuthenticatedUser = async () => {
+  const token = sessionStorage.getItem("token");
+
+  if (!token) return null;
+
+  const res = await fetch("/backend/me", {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) return null;
+
+  return res.json();
+};
+
+const submitReview = async (payload) => {
+  const token = sessionStorage.getItem("token");
+
+  const res = await fetch("/backend/reviews", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw data;
+  }
+
+  return data;
+};
 
 export default function AvisClientPage() {
   const [avis, setAvis] = useState([]);
@@ -437,16 +530,23 @@ export default function AvisClientPage() {
   const [validationErrors, setValidationErrors] = useState({});
   const [toast, setToast] = useState(null);
 
+  const [hasDeliveredOrder, setHasDeliveredOrder] = useState(false);
+
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         setPageError("");
 
-        const [reviewsData, meData] = await Promise.all([
-          fetchReviews(),
-          fetchAuthenticatedUser().catch(() => null),
-        ]);
+       const [reviewsData, meData, hasOrder] = await Promise.all([
+  fetchReviews(),
+  fetchAuthenticatedUser().catch(() => null),
+  fetchHasDeliveredOrder(),
+]);
+
+setHasDeliveredOrder(hasOrder);
+
+        
 
         setAvis(Array.isArray(reviewsData) ? reviewsData : []);
         setAuthUser(meData);
@@ -536,50 +636,53 @@ export default function AvisClientPage() {
     setIsSubmittingReview(true);
     setValidationErrors({});
 
-    if (!payload.rating) {
-      setValidationErrors({
-        rating: ["Veuillez choisir une note."],
-      });
-      return false;
-    }
+    const response = await submitReview(payload);
+    const savedReview = response?.review;
 
-    if (!payload.comment?.trim()) {
-      setValidationErrors({
-        comment: ["Veuillez écrire votre commentaire."],
-      });
-      return false;
-    }
+    setAvis((prev) => {
+      const exists = prev.some((item) => item.user_id === savedReview.user_id);
 
-    const newReview = {
-      id: Date.now(),
-      user_id: authUser?.id,
-      user_name: authUser?.name || "Client",
-      rating: payload.rating,
-      comment: payload.comment.trim(),
-      created_at: new Date().toISOString(),
-    };
+      if (exists) {
+        return prev.map((item) =>
+          item.user_id === savedReview.user_id ? savedReview : item
+        );
+      }
 
-    setAvis((prev) => [newReview, ...prev]);
+      return [savedReview, ...prev];
+    });
+
     setIsFormOpen(false);
 
     setToast({
       type: "success",
-      title: "Avis publié",
-      message: "Merci, votre avis a été ajouté avec succès.",
+      title: "Avis enregistré",
+      message: "Votre avis a été ajouté ou mis à jour avec succès.",
     });
 
     return true;
   } catch (error) {
+    if (error?.errors) {
+      setValidationErrors(error.errors);
+    }
+
     setToast({
       type: "error",
       title: "Erreur",
-      message: "Impossible d'envoyer votre avis.",
+      message: error?.message || "Impossible d'enregistrer votre avis.",
     });
+
     return false;
   } finally {
     setIsSubmittingReview(false);
   }
 };
+
+
+const existingUserReview = useMemo(() => {
+  if (!authUser) return null;
+
+  return avis.find((item) => item.user_id === authUser.id) || null;
+}, [avis, authUser]);
 
   return (
     <>
@@ -748,23 +851,29 @@ export default function AvisClientPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <Link
-                    href="/contact"
-                    className="inline-flex items-center gap-2 self-start rounded-2xl border border-dark/10 bg-white/60 px-4 py-2 text-sm font-semibold text-dark transition-all duration-300 hover:bg-white"
-                  >
-                    Nous contacter
-                    <ChevronRight size={16} />
-                  </Link>
+  <Link
+    href="/contact"
+    className="inline-flex items-center gap-2 self-start rounded-2xl border border-dark/10 bg-white/60 px-4 py-2 text-sm font-semibold text-dark transition-all duration-300 hover:bg-white"
+  >
+    Nous contacter
+    <ChevronRight size={16} />
+  </Link>
 
-                  <button
-                    type="button"
-                    onClick={handleOpenForm}
-                    className="inline-flex items-center gap-2 self-start rounded-2xl bg-dark px-4 py-2 text-sm font-semibold text-accent shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:opacity-95"
-                  >
-                    Laisser votre avis
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
+  {hasDeliveredOrder ? (
+    <button
+      type="button"
+      onClick={handleOpenForm}
+      className="inline-flex items-center gap-2 self-start rounded-2xl bg-dark px-4 py-2 text-sm font-semibold text-accent shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:opacity-95"
+    >
+      {existingUserReview ? "Modifier mon avis" : "Laisser votre avis"}
+      <ChevronRight size={16} />
+    </button>
+  ) : (
+    <p className="self-center text-sm text-dark/60">
+      Vous devez avoir une commande livrée pour laisser un avis.
+    </p>
+  )}
+</div>
               </div>
 
               {loading ? (
@@ -789,7 +898,18 @@ export default function AvisClientPage() {
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="font-semibold text-primary">{item.user_name}</p>
+              <div className="flex items-center gap-2">
+  <p className="font-semibold text-primary">
+    {item.user_name || "Client"}
+  </p>
+
+  {item.is_verified && (
+    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
+      <BadgeCheck size={12} />
+      Avis vérifié
+    </span>
+  )}
+</div>
               <p className="mt-1 text-sm text-dark/50">
                 {formatDate(item.created_at)}
               </p>
@@ -822,13 +942,14 @@ export default function AvisClientPage() {
       </div>
 
       <ReviewFormModal
-        open={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        authUser={authUser}
-        onSubmitReview={handleSubmitReview}
-        isSubmitting={isSubmittingReview}
-        validationErrors={validationErrors}
-      />
+  open={isFormOpen}
+  onClose={() => setIsFormOpen(false)}
+  authUser={authUser}
+  existingReview={existingUserReview}
+  onSubmitReview={handleSubmitReview}
+  isSubmitting={isSubmittingReview}
+  validationErrors={validationErrors}
+/>
     </>
   );
 }

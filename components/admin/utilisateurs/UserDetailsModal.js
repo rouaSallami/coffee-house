@@ -1,4 +1,5 @@
 import { formatUserDate } from "@/lib/admin/utilisateurs/helpers";
+import Image from "next/image";
 
 export default function UserDetailsModal({ user, onClose }) {
   if (!user) return null;
@@ -7,20 +8,32 @@ export default function UserDetailsModal({ user, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
       <div className="w-full max-w-2xl rounded-3xl border border-dark/10 bg-base p-6 shadow-xl">
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-dark">
-              Détails utilisateur
-            </h2>
-            <p className="mt-2 text-dark/70">{user.name}</p>
-          </div>
+  <div className="flex items-center gap-4">
+    {user.avatar_url ? (
+      <img
+        src={user.avatar_url}
+        alt={user.name}
+        className="h-20 w-20 rounded-2xl object-cover border border-dark/10"
+      />
+    ) : (
+      <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary text-2xl font-bold text-white">
+        {user.name?.charAt(0)?.toUpperCase() || "U"}
+      </div>
+    )}
 
-          <button
-            onClick={onClose}
-            className="rounded-xl border border-dark/10 bg-white px-4 py-2 text-sm font-semibold text-dark transition hover:bg-base"
-          >
-            Fermer
-          </button>
-        </div>
+    <div>
+      <h2 className="text-2xl font-bold text-dark">Détails utilisateur</h2>
+      <p className="mt-1 text-dark/70">{user.name}</p>
+    </div>
+  </div>
+
+  <button
+    onClick={onClose}
+    className="rounded-xl border border-dark/10 bg-white px-4 py-2 text-sm font-semibold text-dark transition hover:bg-base"
+  >
+    Fermer
+  </button>
+</div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-dark/10 bg-white/40 p-4">

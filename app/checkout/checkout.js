@@ -5,6 +5,8 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { getUserData, setUserData } from "../lib/storage";
 import { Sparkles } from "lucide-react";
+import toast from "react-hot-toast";
+import { handleInactiveAccount } from "../../lib/handleInactiveAccount";
 
 export default function CheckoutPage() {
   const [mode, setMode] = useState(null);
@@ -158,14 +160,13 @@ const buildOrderNotes = (values) => {
                 validationSchema={getValidationSchema()}
                 onSubmit={async (values) => {
                   if (cart.length === 0) {
-                    alert("Votre panier est vide");
+                    toast.error("Votre panier est vide");
                     return;
                   }
 
                   try {
                     setSubmitting(true);
 
-                    const user = getUserData("user", null);
 
                     const payload = {
 
@@ -193,36 +194,42 @@ const res = await fetch("/backend/orders", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "Accept": "application/json",
-    "Authorization": `Bearer ${token}`, 
+    Accept: "application/json",
+    Authorization: `Bearer ${token}`,
   },
   body: JSON.stringify(payload),
 });
 
-                    const data = await res.json();
+let data = {};
+let rawText = "";
+
+try {
+  rawText = await res.text();
+  data = rawText ? JSON.parse(rawText) : {};
+} catch {
+  data = {};
+}
 
 if (!res.ok) {
-  console.error("ORDER ERROR:", data);
-  alert(data.error || data.message || "Erreur lors de la commande");
+  console.log("ORDER STATUS:", res.status);
+  console.log("ORDER RAW RESPONSE:", rawText);
+
+  if (handleInactiveAccount(data)) {
+    return;
+  }
+
+  toast.error(data.error || data.message || `Erreur ${res.status}`);
   return;
 }
 
-                    sessionStorage.setItem("lastOrder", JSON.stringify(data.order));
-
-                    const currentPoints =
-                      Number(sessionStorage.getItem("points")) || 0;
-                    sessionStorage.setItem(
-                      "points",
-                      String(currentPoints + 20)
-                    );
-
-                    setUserData("cart", []);
-                    window.dispatchEvent(new Event("cartUpdated"));
-
-                    window.location.href = "/mes-commandes";
+// SUCCESS
+window.dispatchEvent(new Event("orderUpdated"));
+setUserData("cart", []);
+window.dispatchEvent(new Event("cartUpdated"));
+window.location.href = "/mes-commandes";
                   } catch (error) {
                     console.error(error);
-                    alert("Server error");
+                    toast.error("Erreur serveur");
                   } finally {
                     setSubmitting(false);
                   }

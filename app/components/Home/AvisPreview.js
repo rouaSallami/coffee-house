@@ -1,31 +1,16 @@
-import Link from "next/link";
+"use client";
 
-const avis = [
-  {
-    id: 1,
-    name: "Sarah",
-    rating: 5,
-    text: "Le meilleur cappuccino à Tunis ! Goût parfait et super service.",
-  },
-  {
-    id: 2,
-    name: "Ahmed",
-    rating: 5,
-    text: "Ambiance cosy et commande rapide. Je recommande fortement.",
-  },
-  {
-    id: 3,
-    name: "Mariem",
-    rating: 4,
-    text: "Très bon latte, bien équilibré. J’aime beaucoup les extras gourmands.",
-  },
-];
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 function Stars({ rating }) {
   return (
     <div className="flex gap-1">
       {Array.from({ length: 5 }).map((_, i) => (
-        <span key={i} className={i < rating ? "text-secondary" : "text-dark/20"}>
+        <span
+          key={i}
+          className={i < rating ? "text-secondary" : "text-dark/20"}
+        >
           ★
         </span>
       ))}
@@ -33,67 +18,140 @@ function Stars({ rating }) {
   );
 }
 
+const fetchReviews = async () => {
+  const res = await fetch("/backend/reviews", {
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error("Erreur lors du chargement des avis");
+  }
+
+  return res.json();
+};
+
 export default function AvisPreview() {
+  const [avis, setAvis] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const data = await fetchReviews();
+        setAvis(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error("Load reviews error:", error);
+        setAvis([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReviews();
+  }, []);
+
+  const latestAvis = useMemo(() => {
+    return [...avis]
+      .sort(
+  (a, b) =>
+    new Date(b.created_at || 0) - new Date(a.created_at || 0)
+)
+      .slice(0, 3)
+      .map((item) => ({
+        id: item.id,
+        name: item.user_name || "Client",
+        rating: Number(item.rating || 0),
+        text: item.comment,
+      }));
+  }, [avis]);
+
+  const averageRating = useMemo(() => {
+    if (!avis.length) return 0;
+
+    const total = avis.reduce((sum, item) => sum + Number(item.rating || 0), 0);
+    return total / avis.length;
+  }, [avis]);
+
   return (
-    <section className="relative py-20 bg-secondary text-dark overflow-hidden">
-      
-      {/* background glow كيف hero */}
+    <section className="relative overflow-hidden bg-secondary py-20 text-dark">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_45%)]" />
       <div className="absolute inset-0 bg-gradient-to-b from-secondary via-secondary to-secondary/80" />
 
-      <div className="relative max-w-6xl mx-auto px-6">
-        
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-12">
+      <div className="relative mx-auto max-w-6xl px-6">
+        <div className="mb-12 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-dark/70 font-bold tracking-[0.2em] text-xs uppercase mb-3">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-dark/70">
               Témoignages
             </p>
 
-            <h2 className="text-3xl sm:text-4xl font-bold text-dark">
+            <h2 className="text-3xl font-bold text-dark sm:text-4xl">
               Avis clients
             </h2>
 
-            <p className="text-dark/75 mt-3">
+            <p className="mt-3 text-dark/75">
               Découvrez les retours de nos clients après leur expérience Coffee House.
             </p>
           </div>
 
-          {/* rating */}
-          <div className="bg-creamy/40 border border-dark/10 rounded-2xl px-5 py-4 backdrop-blur-md shadow-lg">
+          <div className="rounded-2xl border border-dark/10 bg-creamy/40 px-5 py-4 shadow-lg backdrop-blur-md">
             <div className="flex items-center gap-3">
-              <p className="text-2xl font-bold text-dark/80">4.9</p>
+              <p className="text-2xl font-bold text-dark/80">
+                {avis.length > 0 ? averageRating.toFixed(1) : "--"}
+              </p>
+
               <div>
-                <Stars rating={5} />
-                <p className="text-dark/60 text-sm mt-1">Basé sur 120 avis</p>
+                <Stars rating={Math.round(averageRating * 2) / 2} />
+                <p className="mt-1 text-sm text-dark/60">
+                  Basé sur {avis.length} avis
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Cards */}
-        <div className="grid md:grid-cols-3 gap-6">
-          {avis.map((a) => (
-            <div
-              key={a.id}
-              className="bg-creamy/40 backdrop-blur-md border border-dark/10 rounded-3xl p-6 shadow-lg transition hover:-translate-y-1"
-            >
-              <Stars rating={a.rating} />
+        {loading ? (
+          <div className="grid gap-6 md:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-3xl border border-dark/10 bg-creamy/40 p-6 shadow-lg backdrop-blur-md"
+              >
+                <div className="h-4 w-24 animate-pulse rounded bg-dark/10" />
+                <div className="mt-4 h-16 animate-pulse rounded bg-dark/10" />
+                <div className="mt-5 h-4 w-20 animate-pulse rounded bg-dark/10" />
+              </div>
+            ))}
+          </div>
+        ) : latestAvis.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-3">
+            {latestAvis.map((a) => (
+              <div
+                key={a.id}
+                className="rounded-3xl border border-dark/10 bg-creamy/40 p-6 shadow-lg backdrop-blur-md transition hover:-translate-y-1"
+              >
+                <Stars rating={a.rating} />
 
-              <p className="text-dark/75 mt-4 text-sm leading-relaxed">
-                “{a.text}”
-              </p>
+                <p className="mt-4 text-sm leading-relaxed text-dark/75">
+                  “{a.text}”
+                </p>
 
-              <p className="mt-5 font-semibold text-dark">{a.name}</p>
-            </div>
-          ))}
-        </div>
+                <p className="mt-5 font-semibold text-dark">{a.name}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dark/10 bg-creamy/30 px-6 py-10 text-center shadow-lg">
+            <h3 className="text-xl font-bold text-dark">Soyez le premier à laisser un avis</h3>
+            <p className="mt-2 text-dark/70">
+              Les premiers avis clients apparaîtront ici bientôt.
+            </p>
+          </div>
+        )}
 
-        {/* CTA */}
-        <div className="text-center mt-10">
+        <div className="mt-10 text-center">
           <Link
             href="/avisClient"
-            className="inline-flex items-center justify-center rounded-2xl bg-dark text-creamy px-8 py-3.5 font-semibold shadow-lg transition hover:scale-[1.02] hover:opacity-95"
+            className="inline-flex items-center justify-center rounded-2xl bg-dark px-8 py-3.5 font-semibold text-creamy shadow-lg transition hover:scale-[1.02] hover:opacity-95"
           >
             Voir tous les avis
           </Link>

@@ -11,8 +11,10 @@ export default function UsersList({
   onDelete,
   onToggleStatus,
 }) {
+
+  console.log("USERS LIST:", users);
   return (
-    <SectionCard className="!p-8">
+    <SectionCard className="p-8!">
       {isLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, index) => (
@@ -39,16 +41,16 @@ export default function UsersList({
         />
       ) : (
         <div className="space-y-4">
-          {users.map((user) => (
-            <UserCard
-              key={user.id}
-              user={user}
-              onView={onView}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onToggleStatus={onToggleStatus}
-            />
-          ))}
+          {users.map((user, index) => (
+  <UserCard
+    key={`${user.id ?? user.email ?? "user"}-${index}`}
+    user={user}
+    onView={onView}
+    onEdit={onEdit}
+    onDelete={onDelete}
+    onToggleStatus={onToggleStatus}
+  />
+))}
         </div>
       )}
     </SectionCard>

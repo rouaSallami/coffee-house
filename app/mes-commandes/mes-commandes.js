@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { handleInactiveAccount } from "../../lib/handleInactiveAccount";
 
 export default function MesCommandesPage() {
   const [orders, setOrders] = useState([]);
@@ -19,58 +20,65 @@ export default function MesCommandesPage() {
     return diffMinutes < 15;
   };
 
-  const loadOrders = async () => {
+ const loadOrders = async () => {
+  try {
+    const token = sessionStorage.getItem("token");
+
+    const res = await fetch("/backend/orders", {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+
+    let data = {};
+    let rawText = "";
+
     try {
-      const token = sessionStorage.getItem("token");
-
-      if (!token) {
-        setOrders([]);
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch("/backend/orders", {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
-      });
-
-      const text = await res.text();
-
-      let data = [];
-      try {
-        data = text ? JSON.parse(text) : [];
-      } catch {
-        data = [];
-      }
-
-      if (!res.ok) {
-        console.error("Load orders error:", data);
-        setOrders([]);
-        return;
-      }
-
-      const safeOrders = Array.isArray(data) ? data : data.orders || [];
-
-      const activeOrders = safeOrders.filter((order) =>
-        isStillActiveForClient(order)
-      );
-
-      setOrders(activeOrders);
-    } catch (error) {
-      console.error("Load orders error:", error);
-      setOrders([]);
-    } finally {
-      setLoading(false);
+      rawText = await res.text();
+      data = rawText ? JSON.parse(rawText) : {};
+    } catch {
+      data = {};
     }
-  };
+
+    if (handleInactiveAccount(data)) {
+      return;
+    }
+
+    if (!res.ok) {
+      console.log("LOAD ORDERS STATUS:", res.status);
+      console.log("LOAD ORDERS RAW RESPONSE:", rawText);
+      setOrders([]);
+      toast.error(data.message || `Erreur ${res.status}`);
+      return;
+    }
+
+    const safeOrders = Array.isArray(data) ? data : data.orders || [];
+
+    const activeOrders = safeOrders.filter(
+      (order) => !Boolean(order.is_archived)
+    );
+
+    setOrders(activeOrders);
+  } catch (error) {
+    console.error("Load orders error:", error);
+    setOrders([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  
 
   useEffect(() => {
     loadOrders();
   }, []);
+
+
+  
 
   const handleCancelOrder = (orderId) => {
   toast(
@@ -111,6 +119,20 @@ export default function MesCommandesPage() {
                   toast.error(data.message || "Erreur lors de l’annulation");
                   return;
                 }
+
+
+                const safeOrders = Array.isArray(data) ? data : data.orders || [];
+
+
+const activeOrders = safeOrders.filter(
+  (order) => !Boolean(order.is_archived)
+);
+
+setOrders(activeOrders);
+
+                if (handleInactiveAccount(data)) {
+  return;
+}
 
                 setOrders((prev) =>
                   prev.map((order) =>

@@ -13,6 +13,7 @@ import QuickActionsCard from "@/components/admin/dashboard/QuickActionsCard";
 import AdminAlertsCard from "@/components/admin/dashboard/AdminAlertsCard";
 import CoffeesToWatchCard from "@/components/admin/dashboard/CoffeesToWatchCard";
 import OrdersRevenueChartCard from "@/components/admin/dashboard/OrdersRevenueChartCard";
+import ReviewsCard from "@/components/admin/dashboard/ReviewsCard";
 
 import { getCategoryLabel } from "@/lib/admin/dashboard/helpers";
 import {
@@ -102,6 +103,8 @@ export default function AdminDashboardPage() {
       <DashboardHeader />
 
       <DashboardStats cards={dashboardCards} isLoading={isLoading} />
+
+      <ReviewsCard />
 
       <div className="mb-8">
   <OrdersRevenueChartCard

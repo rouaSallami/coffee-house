@@ -38,11 +38,35 @@ export default function Navbar() {
       const favs = getUserData("favoriteCoffees", []);
       setFavCount(favs.length);
     };
+const checkOrder = async () => {
+  try {
+    const token = sessionStorage.getItem("token");
 
-    const checkOrder = () => {
-      const order = sessionStorage.getItem("lastOrder");
-      setHasOrder(!!order);
-    };
+    if (!token) {
+      setHasOrder(false);
+      return;
+    }
+
+    const res = await fetch("/backend/orders", {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      setHasOrder(false);
+      return;
+    }
+
+    const orders = await res.json();
+    setHasOrder(Array.isArray(orders) && orders.length > 0);
+  } catch (e) {
+    console.error("checkOrder error:", e);
+    setHasOrder(false);
+  }
+};
 
     const checkAuth = () => {
       const auth = sessionStorage.getItem("isAuthenticated") === "true";
@@ -60,10 +84,10 @@ export default function Navbar() {
     handleScroll();
 
     window.addEventListener("cartUpdated", updateCartCount);
-    window.addEventListener("favoritesUpdated", updateFavCount);
-    window.addEventListener("orderUpdated", checkOrder);
-    window.addEventListener("authChanged", checkAuth);
-    window.addEventListener("scroll", handleScroll);
+window.addEventListener("favoritesUpdated", updateFavCount);
+window.addEventListener("orderUpdated", checkOrder);
+window.addEventListener("authChanged", checkAuth);
+window.addEventListener("scroll", handleScroll);
 
     return () => {
       window.removeEventListener("cartUpdated", updateCartCount);

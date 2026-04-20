@@ -56,7 +56,7 @@ const res = await fetch("/backend/admin/orders", {
 const normalized = normalizeOrders(safeOrders);
 
 const activeOrders = normalized.filter(
-  (order) => order.isArchived === false
+  (order) => !Boolean(order.isArchived)
 );
 
 setOrders(activeOrders);
